@@ -24,9 +24,10 @@ STRICT WORD COUNT:
 
 STRUCTURE:
 - 1–2 sentence hook
-- 1 moment
+- 1 main moment
 - 1 reaction
 - Fast pacing
+- 2–4 sentences total
         `;
       }
 
@@ -38,11 +39,11 @@ STRICT WORD COUNT:
 - Never go under 100.
 
 STRUCTURE:
-- Hook
-- Setup
-- Rising tension
-- Main moment
-- Reaction
+- Hook paragraph
+- Setup paragraph
+- Tension paragraph
+- Main moment + reaction paragraph
+- 6–10 sentences total
         `;
       }
 
@@ -54,38 +55,64 @@ STRICT WORD COUNT:
 - Never go under 160.
 
 STRUCTURE:
-- Hook
-- Expanded setup
-- Escalation beat 1
-- Escalation beat 2
-- Main moment
-- Emotional reaction
-- Closing line
+- Hook paragraph
+- Expanded setup paragraph
+- Escalation paragraph 1
+- Escalation paragraph 2
+- Main moment + emotional reaction paragraph
+- Final closing paragraph
+- 8–14 sentences total
+
+FINAL SENTENCE (MANDATORY FOR LONG STORIES):
+- The very last sentence of the story MUST be exactly:
+  "But that was only the beginning."
         `;
       }
 
-      return "Write a 120–150 word TikTok story.";
+      return `
+Write a 120–150 word TikTok story with:
+- Clear beginning, middle, and end.
+- No markdown.
+- No filler.
+      `;
     }
 
     // TONE RULES
     function toneRules(t) {
-      if (t === "direct") return "Use a direct, punchy tone.";
-      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
-      if (t === "soft") return "Use a soft, emotional, reflective tone.";
-      return "Use a cinematic, descriptive story tone.";
+      if (t === "direct") return "Use a direct, punchy tone with short, impactful sentences.";
+      if (t === "hype") return "Use a hype, dramatic, high‑energy tone with intense pacing.";
+      if (t === "soft") return "Use a soft, emotional, reflective tone with gentle pacing.";
+      return "Use a cinematic, descriptive story tone with vivid imagery.";
     }
 
     // MODE RULES
     function modeRules(m) {
-      if (m === "hook") return "ONLY write the hook. 1–2 sentences. No story.";
-      if (m === "cta") return "ONLY write the call‑to‑action. 1–2 sentences. No story.";
+      if (m === "hook") {
+        return `
+ONLY write the hook.
+- 1–2 sentences.
+- No full story.
+- No CTA.
+- No extra commentary.
+        `;
+      }
+
+      if (m === "cta") {
+        return `
+ONLY write the call‑to‑action.
+- 1–2 sentences.
+- Speak directly to the viewer.
+- No story content.
+        `;
+      }
+
       return `
-Write a full TikTok story script with:
+Write a full TikTok story script with CLEAR paragraphs:
 - Hook paragraph
 - Setup paragraph
 - Tension paragraph
 - Main moment paragraph
-- Reaction paragraph
+- Reaction / reflection paragraph
 - Ending line paragraph
       `;
     }
@@ -94,18 +121,18 @@ Write a full TikTok story script with:
     const systemPrompt = `
 You are a TikTok story script generator. You MUST follow every rule below with zero exceptions.
 
-GENERAL RULES (MANDATORY):
+GLOBAL RULES (MANDATORY):
 - NEVER ignore length rules.
 - NEVER shorten or compress the story.
 - NEVER exceed or go under the required word count range.
 - NEVER stop early or end mid‑sentence.
 - ALWAYS finish the full narrative cleanly.
-- ALWAYS expand simple topics with sensory detail and pacing.
+- ALWAYS expand simple topics with sensory detail, pacing, and emotion.
 - ALWAYS follow the structure rules.
-- ALWAYS output MULTI‑PARAGRAPH stories (your choice B).
+- ALWAYS output MULTI‑PARAGRAPH stories (blank line between paragraphs) for full stories.
 - No emojis. No hashtags. No disclaimers.
-- No filler like “Here is your story.”
-- No markdown formatting.
+- No filler like "Here is your story."
+- No markdown formatting (no bullets, no headings, no asterisks).
 
 LENGTH RULES (MANDATORY):
 ${lengthRules(length)}
@@ -120,10 +147,17 @@ COMPLETION RULES (MANDATORY):
 - Do NOT end early.
 - Do NOT cut off.
 - Do NOT stop mid‑sentence.
-- If needed, add more detail to reach the required word count.
-- The final output MUST be complete, polished, and fully coherent.
+- The story MUST have a clear ending.
+- For LONG stories, the final sentence MUST be exactly:
+  "But that was only the beginning."
+- If needed, add more detail, pacing, or emotional beats to reach the required word count range BEFORE ending.
 
-If the topic is simple, EXPAND it with vivid detail, emotion, pacing, and atmosphere.
+OUTPUT FORMAT:
+- Plain text only.
+- For full stories: multiple paragraphs separated by blank lines.
+- For hook/cta modes: 1 short paragraph only.
+
+If the topic is simple, EXPAND it with vivid detail, atmosphere, and emotional stakes.
 This is non‑negotiable.
     `.trim();
 
