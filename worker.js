@@ -13,10 +13,11 @@ export default {
     const body = await request.json();
     const { topic, tone, length, mode } = body;
 
+    // LENGTH RULES — STRICT, NON‑NEGOTIABLE
     function lengthRules(len) {
       if (len === "short") {
         return `
-SHORT STORY (15–20 seconds)
+SHORT STORY
 STRICT LENGTH:
 - 40–60 words ONLY.
 - Do NOT exceed 60 words.
@@ -26,15 +27,13 @@ STRUCTURE:
 - 1–2 sentence hook
 - 1 moment
 - 1 reaction
-- No reflection
-- No long buildup
-- Keep it fast and punchy
+- Fast pacing
         `;
       }
 
       if (len === "medium") {
         return `
-MEDIUM STORY (35–45 seconds)
+MEDIUM STORY
 STRICT LENGTH:
 - 100–140 words ONLY.
 - Do NOT exceed 140 words.
@@ -42,16 +41,16 @@ STRICT LENGTH:
 
 STRUCTURE:
 - Hook
-- Brief setup
+- Setup
 - Rising tension
 - Main moment
-- Short reaction
+- Reaction
         `;
       }
 
       if (len === "long") {
         return `
-LONG STORY (55–65 seconds)
+LONG STORY
 STRICT LENGTH:
 - 160–200 words ONLY.
 - Do NOT exceed 200 words.
@@ -71,6 +70,7 @@ STRUCTURE:
       return "Write a 120–150 word TikTok story.";
     }
 
+    // TONE RULES
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic tone.";
@@ -78,9 +78,10 @@ STRUCTURE:
       return "Use a cinematic story tone.";
     }
 
+    // MODE RULES
     function modeRules(m) {
-      if (m === "hook") return "ONLY write the hook. 1–2 sentences.";
-      if (m === "cta") return "ONLY write the call-to-action. 1–2 sentences.";
+      if (m === "hook") return "ONLY write the hook. 1–2 sentences. No story.";
+      if (m === "cta") return "ONLY write the call-to-action. 1–2 sentences. No story.";
       return `
 Write a full TikTok story script with:
 - Hook
@@ -92,14 +93,31 @@ Write a full TikTok story script with:
       `;
     }
 
+    // FINAL SYSTEM PROMPT — THE REAL FIX
     const systemPrompt = `
-You write TikTok storytime scripts.
-Follow ALL rules exactly.
-No emojis. No hashtags. No disclaimers.
+You are a TikTok story script generator. You MUST follow every rule below with zero exceptions.
 
-${toneRules(tone)}
+GENERAL RULES (MANDATORY):
+- NEVER ignore length rules.
+- NEVER shorten or compress the story.
+- NEVER exceed or go under the required word count range.
+- NEVER summarize — always write a full narrative.
+- ALWAYS expand simple topics with sensory detail.
+- ALWAYS follow the structure rules.
+- No emojis. No hashtags. No disclaimers.
+- No filler like “Here is your story.”
+
+LENGTH RULES (MANDATORY):
 ${lengthRules(length)}
+
+TONE RULES:
+${toneRules(tone)}
+
+MODE RULES:
 ${modeRules(mode)}
+
+If the topic is simple, EXPAND it with pacing, emotion, and vivid detail.
+This is non‑negotiable.
     `.trim();
 
     const model = "@cf/meta/llama-3-8b-instruct";
