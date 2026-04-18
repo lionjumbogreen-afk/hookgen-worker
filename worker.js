@@ -111,7 +111,7 @@ FORMAT:
     `.trim();
 
     // AI CALL
-    const aiResponse = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
+    const aiResponse = await env.AI.run("@cf/meta/llama-3-8b-instruct-fast", {
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
