@@ -44,10 +44,18 @@ STRUCTURE:
 STRICT WORD COUNT:
 - 160–200 words ONLY.
 
+STRICT PARAGRAPH COUNT:
+- EXACTLY 6 paragraphs.
+- Each paragraph MUST be 25–35 words.
+- Each paragraph MUST contain 2–3 sentences.
+
 STRUCTURE:
-- 5–6 paragraphs
-- 8–14 sentences total
-- Hook → expanded setup → escalation → escalation → main moment → reaction/closing
+- Paragraph 1: Hook
+- Paragraph 2: Expanded setup
+- Paragraph 3: Escalation 1
+- Paragraph 4: Escalation 2
+- Paragraph 5: Main moment
+- Paragraph 6: Reaction / closing
         `;
       }
 
@@ -112,14 +120,17 @@ ${modeRules(mode)}
 
 ANTI‑CUTOFF RULES (MANDATORY):
 - The story MUST end with a complete final paragraph.
-- The story MUST end with the hidden marker: [END OF STORY]
+- The story MUST internally end with the hidden marker: [END OF STORY]
 - DO NOT show the marker to the user.
 - DO NOT stop before the marker.
-- If needed, add detail to reach the required length BEFORE writing the marker.
+- If the story is not long enough, EXPAND BEFORE writing the marker.
+- If the story has fewer than the required paragraphs, KEEP WRITING.
+- If the story has fewer than the required sentences, KEEP WRITING.
+- If the story has fewer than the required words, KEEP WRITING.
 
 OUTPUT FORMAT:
 - Plain text only.
-- Paragraphs separated by blank lines.
+- Paragraphs separated by a SINGLE newline (no blank line).
 - Final output MUST end with "[END OF STORY]" on its own line.
 
 This is non‑negotiable.
