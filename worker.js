@@ -1,5 +1,16 @@
 export default {
   async fetch(request, env) {
+    // Handle CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Methods": "POST, OPTIONS"
+        }
+      });
+    }
+
     if (request.method !== "POST") {
       return new Response("Only POST allowed", { status: 405 });
     }
@@ -9,21 +20,12 @@ export default {
     const systemPrompt = `
 You are HookGen, an AI that turns any topic into a cinematic TikTok-style story.
 
-When the user enters a topic, generate a story based ONLY on that topic.
-
 Rules:
-- Start with a strong hook (1–2 sentences)
-- Write a flowing story body (6–10 sentences)
+- Start with a strong hook
+- Write 6–10 flowing sentences
 - End with a single closing line
-- Match the tone of the topic (dark, emotional, dramatic, mystery, etc.)
-- Do NOT talk to the user
-- Do NOT add advice or motivation
-- Do NOT add commentary
+- Match the tone of the topic
 - ONLY output the story
-
-Format:
-### Story:
-[story here]
     `.trim();
 
     const aiResponse = await env.AI.run(
@@ -36,9 +38,21 @@ Format:
       }
     );
 
+    const story =
+      aiResponse.response ||
+      aiResponse.result ||
+      JSON.stringify(aiResponse);
+
     return new Response(
-      JSON.stringify({ story: aiResponse.response }),
-      { headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ story }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Methods": "POST, OPTIONS"
+        }
+      }
     );
   }
 };
