@@ -13,7 +13,6 @@ export default {
     const body = await request.json();
     const { topic, tone, length, mode } = body;
 
-    // LENGTH RULES — STRICT, NON‑NEGOTIABLE
     function lengthRules(len) {
       if (len === "short") {
         return `
@@ -62,7 +61,6 @@ STRUCTURE:
       return "Write a 120–150 word TikTok story.";
     }
 
-    // TONE RULES
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
@@ -70,7 +68,6 @@ STRUCTURE:
       return "Use a cinematic, descriptive story tone.";
     }
 
-    // MODE RULES
     function modeRules(m) {
       if (m === "hook") {
         return `
@@ -93,7 +90,6 @@ Write a full TikTok story script with CLEAR paragraph breaks.
       `;
     }
 
-    // FINAL SYSTEM PROMPT — FULLY HARDENED
     const systemPrompt = `
 You are a TikTok story script generator. You MUST follow every rule below with zero exceptions.
 
@@ -130,7 +126,7 @@ ANTI‑CUTOFF RULES (MANDATORY):
 
 OUTPUT FORMAT:
 - Plain text only.
-- Paragraphs separated by a SINGLE newline (no blank line).
+- Paragraphs separated by a SINGLE newline.
 - Final output MUST end with "[END OF STORY]" on its own line.
 
 This is non‑negotiable.
