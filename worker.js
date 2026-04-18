@@ -83,6 +83,13 @@ Write a full TikTok story script with:
       `;
     }
 
+    // HYBRID MODEL SELECTION
+    let model = "@cf/meta/llama-3-8b-instruct-fast"; // default fast model
+
+    if (length === "long") {
+      model = "@cf/meta/llama-3-8b-instruct"; // normal model for long stories
+    }
+
     // SYSTEM PROMPT
     const systemPrompt = `
 You write TikTok-style cinematic storytime scripts.
@@ -111,7 +118,7 @@ FORMAT:
     `.trim();
 
     // AI CALL
-    const aiResponse = await env.AI.run("@cf/meta/llama-3-8b-instruct-fast", {
+    const aiResponse = await env.AI.run(model, {
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
