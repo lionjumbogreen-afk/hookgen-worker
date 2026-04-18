@@ -84,10 +84,12 @@ Write a full TikTok story script with:
     }
 
     // HYBRID MODEL SELECTION
-    let model = "@cf/meta/llama-3-8b-instruct-fast"; // default fast model
+    // Fast model for short + medium
+    let model = "@cf/meta/llama-3-8b-instruct-q4f16_1";
 
+    // Full model for long stories
     if (length === "long") {
-      model = "@cf/meta/llama-3-8b-instruct"; // normal model for long stories
+      model = "@cf/meta/llama-3-8b-instruct";
     }
 
     // SYSTEM PROMPT
