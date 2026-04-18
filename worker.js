@@ -35,21 +35,27 @@ LENGTH RULES (STRICT):
           `;
         }
 
-        if (len === "medium") {
-          return `
+       if (len === "medium") {
+  return `
 Write a 30–45 second TikTok story.
 
-LENGTH RULES (STRICT):
-- 150–180 words
-- Do NOT write fewer than 150 words.
+LENGTH RULES (EXTREMELY STRICT):
+- 160–190 words.
+- Do NOT write fewer than 160 words.
 - Count your words and ensure the final output meets the minimum.
-- Expand the setup, tension, sensory detail, and emotional beats.
-- Add 2–3 extra moments of internal thought.
-- Add more buildup before the main moment.
-- Slow the pacing intentionally.
+- If the story is under 160 words, expand it until it reaches the requirement.
+
+EXPANSION RULES:
+- Add a longer setup (4–6 sentences).
+- Add 3–4 beats of rising tension.
+- Add sensory detail (sound, lighting, movement, temperature).
+- Add internal thoughts to slow pacing.
+- Add emotional reactions before AND after the main moment.
+- Add a reflective closing line.
 - Do NOT compress the story.
-          `;
-        }
+- Do NOT skip beats.
+  `;
+}
 
         if (len === "long") {
           return `
