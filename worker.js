@@ -17,7 +17,7 @@ export default {
 
     const { topic } = await request.json();
 
-    // Stronger, more human TikTok-style prompt
+    // Premium TikTok-style prompt
     const systemPrompt = `
 You write TikTok-style cinematic storytime scripts.
 Your writing feels human, emotional, visual, and fast-paced.
@@ -32,34 +32,23 @@ Format:
 [story here]
     `.trim();
 
-    // Function to generate ONE story
-    async function generateStory() {
-      const aiResponse = await env.AI.run(
-        "@cf/meta/llama-3-8b-instruct",
-        {
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: topic }
-          ]
-        }
-      );
+    const aiResponse = await env.AI.run(
+      "@cf/meta/llama-3-8b-instruct",
+      {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: topic }
+        ]
+      }
+    );
 
-      return (
-        aiResponse.response ||
-        aiResponse.result ||
-        JSON.stringify(aiResponse)
-      );
-    }
-
-    // Run 3 stories IN PARALLEL
-    const [story1, story2, story3] = await Promise.all([
-      generateStory(),
-      generateStory(),
-      generateStory()
-    ]);
+    const story =
+      aiResponse.response ||
+      aiResponse.result ||
+      JSON.stringify(aiResponse);
 
     return new Response(
-      JSON.stringify({ stories: [story1, story2, story3] }),
+      JSON.stringify({ story }),
       {
         headers: {
           "Content-Type": "application/json",
@@ -71,4 +60,3 @@ Format:
     );
   }
 };
-
