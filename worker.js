@@ -17,11 +17,10 @@ export default {
     function lengthRules(len) {
       if (len === "short") {
         return `
-SHORT STORY
-STRICT LENGTH:
+STRICT WORD COUNT:
 - 40–60 words ONLY.
-- Do NOT exceed 60 words.
-- Do NOT go under 40 words.
+- Never exceed 60.
+- Never go under 40.
 
 STRUCTURE:
 - 1–2 sentence hook
@@ -33,11 +32,10 @@ STRUCTURE:
 
       if (len === "medium") {
         return `
-MEDIUM STORY
-STRICT LENGTH:
+STRICT WORD COUNT:
 - 100–140 words ONLY.
-- Do NOT exceed 140 words.
-- Do NOT go under 100 words.
+- Never exceed 140.
+- Never go under 100.
 
 STRUCTURE:
 - Hook
@@ -50,11 +48,10 @@ STRUCTURE:
 
       if (len === "long") {
         return `
-LONG STORY
-STRICT LENGTH:
+STRICT WORD COUNT:
 - 160–200 words ONLY.
-- Do NOT exceed 200 words.
-- Do NOT go under 160 words.
+- Never exceed 200.
+- Never go under 160.
 
 STRUCTURE:
 - Hook
@@ -73,27 +70,27 @@ STRUCTURE:
     // TONE RULES
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
-      if (t === "hype") return "Use a hype, dramatic tone.";
-      if (t === "soft") return "Use a soft, emotional tone.";
-      return "Use a cinematic story tone.";
+      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
+      if (t === "soft") return "Use a soft, emotional, reflective tone.";
+      return "Use a cinematic, descriptive story tone.";
     }
 
     // MODE RULES
     function modeRules(m) {
       if (m === "hook") return "ONLY write the hook. 1–2 sentences. No story.";
-      if (m === "cta") return "ONLY write the call-to-action. 1–2 sentences. No story.";
+      if (m === "cta") return "ONLY write the call‑to‑action. 1–2 sentences. No story.";
       return `
 Write a full TikTok story script with:
-- Hook
-- Setup
-- Tension
-- Main moment
-- Reaction
-- Ending line
+- Hook paragraph
+- Setup paragraph
+- Tension paragraph
+- Main moment paragraph
+- Reaction paragraph
+- Ending line paragraph
       `;
     }
 
-    // FINAL SYSTEM PROMPT — THE REAL FIX
+    // FINAL SYSTEM PROMPT — FULLY HARDENED
     const systemPrompt = `
 You are a TikTok story script generator. You MUST follow every rule below with zero exceptions.
 
@@ -101,11 +98,14 @@ GENERAL RULES (MANDATORY):
 - NEVER ignore length rules.
 - NEVER shorten or compress the story.
 - NEVER exceed or go under the required word count range.
-- NEVER summarize — always write a full narrative.
-- ALWAYS expand simple topics with sensory detail.
+- NEVER stop early or end mid‑sentence.
+- ALWAYS finish the full narrative cleanly.
+- ALWAYS expand simple topics with sensory detail and pacing.
 - ALWAYS follow the structure rules.
+- ALWAYS output MULTI‑PARAGRAPH stories (your choice B).
 - No emojis. No hashtags. No disclaimers.
 - No filler like “Here is your story.”
+- No markdown formatting.
 
 LENGTH RULES (MANDATORY):
 ${lengthRules(length)}
@@ -116,7 +116,14 @@ ${toneRules(tone)}
 MODE RULES:
 ${modeRules(mode)}
 
-If the topic is simple, EXPAND it with pacing, emotion, and vivid detail.
+COMPLETION RULES (MANDATORY):
+- Do NOT end early.
+- Do NOT cut off.
+- Do NOT stop mid‑sentence.
+- If needed, add more detail to reach the required word count.
+- The final output MUST be complete, polished, and fully coherent.
+
+If the topic is simple, EXPAND it with vivid detail, emotion, pacing, and atmosphere.
 This is non‑negotiable.
     `.trim();
 
