@@ -18,48 +18,21 @@ export default {
     // Read request
     const { topic, tone, length, mode } = await request.json();
 
-    // LENGTH RULES — STRICT ENFORCEMENT
+    // Length → word count mapping
     function getLengthInstruction(len) {
       if (len === "short") {
-        return `
-Write a 15–20 second TikTok story.
-
-LENGTH RULES:
-- 45–65 words
-- Do NOT write fewer than 45 words.
-- Expand the setup or tension if needed to reach the length.
-        `;
+        return "Write a 15–20 second TikTok story (~45–65 words).";
       }
-
       if (len === "medium") {
-        return `
-Write a 30–45 second TikTok story.
-
-LENGTH RULES:
-- 120–150 words
-- Do NOT write fewer than 120 words.
-- Expand the setup, tension, sensory detail, and emotional beats.
-- Add more buildup before the main moment.
-- Add internal thoughts and reactions to increase pacing.
-        `;
+        return "Write a 30–45 second TikTok story (~90–140 words).";
       }
-
       if (len === "long") {
-        return `
-Write a 55–65 second cinematic TikTok story.
-
-LENGTH RULES:
-- 180–220 words
-- Do NOT write fewer than 180 words.
-- Include full setup, tension, escalation, twist, and emotional payoff.
-- Add vivid sensory detail and pacing.
-        `;
+        return "Write a 55–65 second cinematic TikTok story (~165–200 words).";
       }
-
       return "";
     }
 
-    // TONE RULES
+    // Tone mapping
     function getToneInstruction(t) {
       if (t === "direct") return "Use a direct, punchy, confident tone.";
       if (t === "hype") return "Use a hype, high-energy, dramatic tone.";
@@ -68,29 +41,14 @@ LENGTH RULES:
       return "";
     }
 
-    // MODE RULES
+    // Mode mapping
     function getModeInstruction(m) {
       if (m === "hook") return "ONLY write the hook. 1–2 sentences max.";
       if (m === "cta") return "ONLY write the call-to-action. 1–2 sentences.";
-      return `
-Write a full TikTok story script with:
-- Hook
-- Setup
-- Rising tension
-- Main moment
-- Emotional reaction
-- Ending line
-      `;
+      return "Write a full TikTok story script with hook, setup, tension, payoff, and a closing line.";
     }
 
-    // HYBRID MODEL SELECTION
-    let model = "@cf/meta/llama-3-8b-instruct-fast"; // default fast model
-
-    if (length === "long") {
-      model = "@cf/meta/llama-3-8b-instruct"; // normal model for long stories
-    }
-
-    // SYSTEM PROMPT
+    // Build final system prompt
     const systemPrompt = `
 You write TikTok-style cinematic storytime scripts.
 Your writing feels human, emotional, visual, and fast-paced.
@@ -100,25 +58,24 @@ You use tension, sensory detail, and natural pacing.
 You avoid advice, motivation, or commentary.
 You ONLY output the story.
 
-RULES:
+Follow these rules:
 - No emojis.
 - No hashtags.
 - No disclaimers.
 - No commentary.
 - No extra formatting besides the story.
-- Follow the length rules EXACTLY.
 
 ${getToneInstruction(tone)}
 ${getLengthInstruction(length)}
 ${getModeInstruction(mode)}
 
-FORMAT:
+Format:
 ### Story:
 [story here]
     `.trim();
 
-    // AI CALL
-    const aiResponse = await env.AI.run(model, {
+    // AI call
+    const aiResponse = await env.AI.run("@cf/meta/llama-3-8b-instruct", {
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
@@ -130,7 +87,7 @@ FORMAT:
       aiResponse.result ||
       JSON.stringify(aiResponse);
 
-    // RETURN JSON
+    // Return JSON
     return new Response(
       JSON.stringify({ story }),
       {
