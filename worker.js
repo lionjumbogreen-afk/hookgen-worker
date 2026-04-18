@@ -36,15 +36,23 @@ export default {
 
       function getLengthInstruction(len) {
         if (len === "short") {
-          return `
-Write a short TikTok story.
+  return `
+Write a SHORT TikTok story.
 
-LENGTH:
-- 60–90 words.
-- Do NOT write fewer than 60 words.
-- Count your words and expand setup or tension if needed.
-          `;
-        }
+STRICT RULES:
+- 40–55 words ONLY.
+- ABSOLUTELY DO NOT exceed 55 words.
+- Keep pacing FAST.
+- ONE scene only.
+- ONE moment only.
+- ONE reaction only.
+- NO long setup.
+- NO hospital trips.
+- NO extended dialogue.
+- NO reflection paragraphs.
+- Count your words before outputting.
+  `;
+}
 
         if (len === "medium") {
           return `
