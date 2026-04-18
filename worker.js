@@ -17,34 +17,49 @@ export default {
 
     const { topic } = await request.json();
 
+    // Stronger, more human TikTok-style prompt
     const systemPrompt = `
-You are HookGen, an AI that turns any topic into a cinematic TikTok-style story.
+You write TikTok-style cinematic storytime scripts.
+Your writing feels human, emotional, visual, and fast-paced.
+You avoid robotic or generic AI phrasing.
+You write like a creator talking directly to the viewer.
+You use tension, sensory detail, and natural pacing.
+You avoid advice, motivation, or commentary.
+You ONLY output the story.
 
-Rules:
-- Start with a strong hook
-- Write 6–10 flowing sentences
-- End with a single closing line
-- Match the tone of the topic
-- ONLY output the story
+Format:
+### Story:
+[story here]
     `.trim();
 
-    const aiResponse = await env.AI.run(
-      "@cf/meta/llama-3-8b-instruct",
-      {
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: topic }
-        ]
-      }
-    );
+    // Function to generate ONE story
+    async function generateStory() {
+      const aiResponse = await env.AI.run(
+        "@cf/meta/llama-3-8b-instruct",
+        {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: topic }
+          ]
+        }
+      );
 
-    const story =
-      aiResponse.response ||
-      aiResponse.result ||
-      JSON.stringify(aiResponse);
+      return (
+        aiResponse.response ||
+        aiResponse.result ||
+        JSON.stringify(aiResponse)
+      );
+    }
+
+    // Run 3 stories IN PARALLEL
+    const [story1, story2, story3] = await Promise.all([
+      generateStory(),
+      generateStory(),
+      generateStory()
+    ]);
 
     return new Response(
-      JSON.stringify({ story }),
+      JSON.stringify({ stories: [story1, story2, story3] }),
       {
         headers: {
           "Content-Type": "application/json",
@@ -56,3 +71,4 @@ Rules:
     );
   }
 };
+
