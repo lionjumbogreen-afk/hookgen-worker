@@ -144,10 +144,8 @@ This is non‑negotiable.
     let story = aiResponse.response;
 
     // REMOVE the hidden marker before sending to frontend
-    story = story.replace(/
-
+   story = story.replace(/
 \[END OF STORY\]
-
 /g, "").trim();
 
     return new Response(JSON.stringify({ story }), {
