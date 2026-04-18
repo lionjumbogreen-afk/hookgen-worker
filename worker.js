@@ -22,65 +22,79 @@ export default {
       const body = await request.json();
       let { topic, tone, length, mode } = body;
 
-      // Normalize length
+      // Normalize length just in case
       length = (length || "").toLowerCase().trim();
-      if (["med", "medo", "medoum", "medium ", "Medium"].includes(length)) {
-        length = "medium";
-      }
-      if (["short ", "Short"].includes(length)) {
-        length = "short";
-      }
-      if (["long ", "Long"].includes(length)) {
-        length = "long";
-      }
+      if (length === "short " || length === "Short") length = "short";
+      if (length === "medium " || length === "Medium") length = "medium";
+      if (length === "long " || length === "Long") length = "long";
 
       function getLengthInstruction(len) {
-       if (len === "short") {
-  return `
+        if (len === "short") {
+          return `
 Write a SHORT TikTok story.
 
-STRICT RULES:
+STRICT LENGTH:
 - 35–50 words ONLY.
 - DO NOT exceed 50 words.
+- DO NOT write fewer than 35 words.
+
+STRUCTURE:
 - ONE scene only.
-- ONE moment only.
-- ONE reaction only.
+- ONE main moment.
+- ONE reaction.
 - NO long setup.
-- NO emotional reflection.
+- NO reflection paragraphs.
 - NO multiple paragraphs.
 - Keep sentences short and direct.
-- Count your words before outputting.
-  `;
-}
+          `;
+        }
 
         if (len === "medium") {
           return `
-Write a medium TikTok story.
+Write a MEDIUM TikTok story.
 
 LENGTH:
-- 150–190 words.
-- Do NOT write fewer than 150 words.
-- Count your words.
-- Use a clear setup, rising tension, main moment, and reaction.
+- 120–170 words.
+- Do NOT write fewer than 120 words.
+- Do NOT exceed 170 words.
+
+STRUCTURE:
+- Hook in the first 1–2 sentences.
+- Brief setup.
+- Rising tension.
+- One main moment.
+- Short reaction and ending line.
           `;
         }
 
         if (len === "long") {
           return `
-Write a long TikTok story.
+Write a LONG TikTok story.
 
 LENGTH:
 - 220–260 words.
 - Do NOT write fewer than 220 words.
-- Count your words.
-- Include full setup, escalation, main moment, and emotional payoff.
+- Do NOT exceed 260 words.
+
+STRUCTURE:
+- Strong hook.
+- Clear setup.
+- Escalation with 2–3 beats.
+- Main moment.
+- Emotional reaction.
+- Satisfying closing line.
           `;
         }
 
-        return "";
+        return `
+Write a TikTok story with clear pacing.
+If no length is specified, aim for 140–180 words.
+        `;
       }
 
       function getToneInstruction(t) {
+        if (!t) return "";
+        t = String(t).toLowerCase();
         if (t === "direct") return "Use a direct, punchy, confident tone.";
         if (t === "hype") return "Use a hype, high-energy, dramatic tone.";
         if (t === "story") return "Use a cinematic, emotional, story-driven tone.";
@@ -89,15 +103,29 @@ LENGTH:
       }
 
       function getModeInstruction(m) {
-        if (m === "hook") return "ONLY write the hook. 1–2 sentences max.";
-        if (m === "cta") return "ONLY write the call-to-action. 1–2 sentences.";
+        if (!m) return "";
+        m = String(m).toLowerCase();
+        if (m === "hook") {
+          return `
+ONLY write the hook.
+- 1–2 sentences.
+- No full story.
+          `;
+        }
+        if (m === "cta") {
+          return `
+ONLY write the call-to-action.
+- 1–2 sentences.
+- Speak directly to the viewer.
+          `;
+        }
         return `
 Write a full TikTok story script with:
 - Hook
 - Setup
 - Rising tension
 - Main moment
-- Emotional reaction
+- Reaction
 - Ending line
         `;
       }
@@ -106,16 +134,15 @@ Write a full TikTok story script with:
 
       const systemPrompt = `
 You write TikTok-style cinematic storytime scripts.
-Your writing feels human, emotional, visual, and fast-paced.
-You write like a creator talking directly to the viewer.
+You speak like a creator talking directly to the viewer.
 You ONLY output the story text.
 
 RULES:
 - No emojis.
 - No hashtags.
 - No disclaimers.
-- No commentary.
-- Follow the length instructions.
+- No commentary about being an AI.
+- Follow the length and structure instructions exactly.
 
 ${getToneInstruction(tone)}
 ${getLengthInstruction(length)}
