@@ -144,12 +144,8 @@ This is non‑negotiable.
     let story = aiResponse.response || "";
 
     // FIXED REGEX — this is the correct version
-    story = story.replace(/
-
-\[END OF STORY\]
-
-/g, "").trim();
-
+    story = story.replace(/\[END OF STORY\]/g, "").trim();
+    
     return new Response(JSON.stringify({ story }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
