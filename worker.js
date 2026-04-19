@@ -22,7 +22,6 @@ STRICT WORD COUNT:
 STRUCTURE:
 - EXACTLY 1 paragraph.
 - 2–4 sentences.
-- Hook → moment → reaction.
 
 ENFORCEMENT:
 - If under 40 words, KEEP WRITING.
@@ -33,47 +32,44 @@ ENFORCEMENT:
       if (len === "medium") {
         return `
 STRICT WORD COUNT:
-- 100–140 words ONLY.
+- 80–110 words ONLY.
 
 STRUCTURE:
-- EXACTLY 3–4 paragraphs.
-- 6–10 sentences total.
+- EXACTLY 2–3 paragraphs.
+- 2–3 sentences each.
 
 ENFORCEMENT:
-- If fewer than 3 paragraphs, KEEP WRITING.
-- If fewer than 6 sentences, KEEP WRITING.
-- If under 100 words, KEEP WRITING.
-- If over 140 words, REWRITE until correct.
+- If fewer than 2 paragraphs, KEEP WRITING.
+- If under 80 words, KEEP WRITING.
+- If over 110 words, REWRITE until correct.
         `;
       }
 
       if (len === "long") {
         return `
 STRICT WORD COUNT:
-- 160–200 words ONLY.
+- 120–150 words ONLY.
 
 STRICT PARAGRAPH COUNT:
-- EXACTLY 6 paragraphs.
+- EXACTLY 4 paragraphs.
 
 STRICT PARAGRAPH RULES:
-- Each paragraph MUST be 25–35 words.
+- Each paragraph MUST be 20–30 words.
 - Each paragraph MUST contain 2–3 sentences.
 
 STRUCTURE:
 - P1: Hook
 - P2: Setup
-- P3: Escalation 1
-- P4: Escalation 2
-- P5: Main moment
-- P6: Reaction / closing
+- P3: Escalation
+- P4: Payoff / closing
 
 ENFORCEMENT (MANDATORY):
-- If ANY paragraph is under 25 words, EXPAND IT.
-- If ANY paragraph is over 35 words, REWRITE IT.
+- If ANY paragraph is under 20 words, EXPAND IT.
+- If ANY paragraph is over 30 words, REWRITE IT.
 - If ANY paragraph has fewer than 2 sentences, ADD MORE.
 - If ANY paragraph has more than 3 sentences, REWRITE IT.
-- If total words < 160, KEEP WRITING.
-- If total words > 200, REWRITE until correct.
+- If total words < 120, KEEP WRITING.
+- If total words > 150, REWRITE until correct.
 - DO NOT STOP until ALL rules are satisfied.
         `;
       }
@@ -168,7 +164,7 @@ This is non‑negotiable.
 
     // Remove the hidden marker before returning
     story = story.replace(/\[END OF STORY\]/g, "").trim();
-
+    
     return new Response(JSON.stringify({ story }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
