@@ -51,7 +51,9 @@ ENFORCEMENT (MANDATORY):
       }
       return "Use a cinematic, descriptive story tone.";
     }
-
+if (t === "tiktok_narrator") {
+  return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis. Sentences should feel like they are read by the TikTok text-to-speech voice.";
+}
     function modeRules(m) {
       if (m === "hook") {
         return `
