@@ -15,10 +15,10 @@ export default {
 
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
-      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
+      if (t === "hype") return "Use a hype, dramatic, high-energy tone.";
       if (t === "soft") return "Use a soft, emotional, reflective tone.";
       if (t === "tiktok_narrator")
-        return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis.";
+        return "Write in the pacing and cadence of TikTok's narrator voice: short beats, clear pauses, clean emphasis.";
       return "Use a cinematic, descriptive story tone.";
     }
 
@@ -33,7 +33,7 @@ No story.
 
       if (m === "cta") {
         return `
-ONLY write the call‑to‑action.
+ONLY write the call-to-action.
 1–2 sentences.
 No story.
         `;
@@ -41,7 +41,7 @@ No story.
 
       return `
 Write a full TikTok story script.
-Target length: 180–220 words.
+Target length: 180–220 words (≈ 60 seconds).
 Use natural paragraph breaks (4–6 paragraphs).
 Cinematic pacing with emotional detail.
 The ending MUST be complete and resolved. NO cliffhangers.
@@ -57,7 +57,7 @@ MANDATORY RULES:
 - No emojis. No hashtags. No disclaimers.
 - No markdown formatting.
 - No filler like "Here is your story."
-- Keep pacing cinematic and TikTok‑friendly.
+- Keep pacing cinematic and TikTok-friendly.
 
 ENDING RULES:
 - The story MUST end with a complete, satisfying resolution.
