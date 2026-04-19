@@ -41,28 +41,37 @@ No story.
 
       return `
 Write a full TikTok story script.
-Target length: 180–220 words (≈ 60 seconds).
-Use natural paragraph breaks (4–6 paragraphs).
-Cinematic pacing with emotional detail.
-The ending MUST be complete and resolved. NO cliffhangers.
+
+MANDATORY LENGTH RULES:
+- Target 180–220 words.
+- Use 4–6 paragraphs.
+- Maintain smooth pacing.
+- Expand scenes with sensory detail and emotional depth.
+- If the story is too short, continue writing until the target range is reached.
+
+STYLE RULES:
+- Cinematic pacing.
+- No emojis. No hashtags. No markdown.
+- No filler like "Here is your story."
+
+ENDING RULES:
+- The final paragraph MUST fully resolve the story.
+- NO cliffhangers.
+- NO incomplete final sentences.
       `;
     }
 
     const systemPrompt = `
 You are a TikTok story script generator.
 
-MANDATORY RULES:
-- Write 180–220 words.
-- Use natural paragraph breaks (4–6 paragraphs).
-- No emojis. No hashtags. No disclaimers.
-- No markdown formatting.
-- No filler like "Here is your story."
-- Keep pacing cinematic and TikTok-friendly.
+Your job is to ALWAYS produce a story between 180–220 words.
+If the model tries to end early, CONTINUE writing until the target range is met.
 
-ENDING RULES:
-- The story MUST end with a complete, satisfying resolution.
-- NO cliffhangers.
-- NO open-ended final sentences.
+STRUCTURE:
+- 4–6 paragraphs.
+- Natural pacing.
+- Smooth emotional flow.
+- No emojis. No hashtags. No markdown.
 
 TONE:
 ${toneRules(tone)}
@@ -77,7 +86,8 @@ ${modeRules(mode)}
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
-      ]
+      ],
+      max_tokens: 900
     });
 
     const story = aiResponse.response || "";
