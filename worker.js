@@ -20,9 +20,13 @@ STRICT WORD COUNT:
 - 40–60 words ONLY.
 
 STRUCTURE:
-- 1 paragraph
-- 2–4 sentences
-- Hook → moment → reaction
+- EXACTLY 1 paragraph.
+- 2–4 sentences.
+- Hook → moment → reaction.
+
+ENFORCEMENT:
+- If under 40 words, KEEP WRITING.
+- If over 60 words, REWRITE until correct.
         `;
       }
 
@@ -32,9 +36,14 @@ STRICT WORD COUNT:
 - 100–140 words ONLY.
 
 STRUCTURE:
-- 3–4 paragraphs
-- 6–10 sentences total
-- Hook → setup → tension → moment/reaction
+- EXACTLY 3–4 paragraphs.
+- 6–10 sentences total.
+
+ENFORCEMENT:
+- If fewer than 3 paragraphs, KEEP WRITING.
+- If fewer than 6 sentences, KEEP WRITING.
+- If under 100 words, KEEP WRITING.
+- If over 140 words, REWRITE until correct.
         `;
       }
 
@@ -45,16 +54,27 @@ STRICT WORD COUNT:
 
 STRICT PARAGRAPH COUNT:
 - EXACTLY 6 paragraphs.
+
+STRICT PARAGRAPH RULES:
 - Each paragraph MUST be 25–35 words.
 - Each paragraph MUST contain 2–3 sentences.
 
 STRUCTURE:
-- Paragraph 1: Hook
-- Paragraph 2: Expanded setup
-- Paragraph 3: Escalation 1
-- Paragraph 4: Escalation 2
-- Paragraph 5: Main moment
-- Paragraph 6: Reaction / closing
+- P1: Hook
+- P2: Setup
+- P3: Escalation 1
+- P4: Escalation 2
+- P5: Main moment
+- P6: Reaction / closing
+
+ENFORCEMENT (MANDATORY):
+- If ANY paragraph is under 25 words, EXPAND IT.
+- If ANY paragraph is over 35 words, REWRITE IT.
+- If ANY paragraph has fewer than 2 sentences, ADD MORE.
+- If ANY paragraph has more than 3 sentences, REWRITE IT.
+- If total words < 160, KEEP WRITING.
+- If total words > 200, REWRITE until correct.
+- DO NOT STOP until ALL rules are satisfied.
         `;
       }
 
@@ -74,6 +94,7 @@ STRUCTURE:
 ONLY write the hook.
 - 1–2 sentences.
 - No story.
+- No paragraphs.
         `;
       }
 
@@ -82,6 +103,7 @@ ONLY write the hook.
 ONLY write the call‑to‑action.
 - 1–2 sentences.
 - No story.
+- No paragraphs.
         `;
       }
 
@@ -95,11 +117,10 @@ You are a TikTok story script generator. You MUST follow every rule below with z
 
 GLOBAL RULES (MANDATORY):
 - NEVER ignore length rules.
-- NEVER exceed or go under the required word count.
 - NEVER stop early.
 - NEVER end mid‑sentence.
 - ALWAYS finish the full narrative.
-- ALWAYS expand simple topics with sensory detail.
+- ALWAYS expand simple ideas with sensory detail.
 - ALWAYS output MULTIPLE PARAGRAPHS for full stories.
 - No emojis. No hashtags. No disclaimers.
 - No markdown formatting.
@@ -119,10 +140,12 @@ ANTI‑CUTOFF RULES (MANDATORY):
 - The story MUST internally end with the hidden marker: [END OF STORY]
 - DO NOT show the marker to the user.
 - DO NOT stop before the marker.
-- If the story is not long enough, EXPAND BEFORE writing the marker.
-- If the story has fewer than the required paragraphs, KEEP WRITING.
-- If the story has fewer than the required sentences, KEEP WRITING.
-- If the story has fewer than the required words, KEEP WRITING.
+- If the story is not long enough, KEEP WRITING.
+- If ANY rule is not satisfied, KEEP WRITING.
+- If ANY paragraph is incomplete, KEEP WRITING.
+- If ANY sentence is incomplete, KEEP WRITING.
+- If ANY structure rule is broken, KEEP WRITING.
+- DO NOT stop until ALL rules are satisfied.
 
 OUTPUT FORMAT:
 - Plain text only.
@@ -143,9 +166,9 @@ This is non‑negotiable.
 
     let story = aiResponse.response || "";
 
-    // FIXED REGEX — this is the correct version
+    // Remove the hidden marker before returning
     story = story.replace(/\[END OF STORY\]/g, "").trim();
-    
+
     return new Response(JSON.stringify({ story }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
