@@ -141,11 +141,13 @@ This is non‑negotiable.
       ]
     });
 
-    let story = aiResponse.response;
+    let story = aiResponse.response || "";
 
-    // REMOVE the hidden marker before sending to frontend
-   story = story.replace(/
+    // FIXED REGEX — this is the correct version
+    story = story.replace(/
+
 \[END OF STORY\]
+
 /g, "").trim();
 
     return new Response(JSON.stringify({ story }), {
