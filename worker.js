@@ -11,42 +11,10 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, length, mode } = body;
+    const { topic, tone, mode } = body;
 
-    function lengthRules(len) {
-      if (len === "short") {
-        return `
-STRICT WORD COUNT:
-- 40–60 words ONLY.
-
-STRUCTURE:
-- EXACTLY 1 paragraph.
-- 2–4 sentences.
-
-ENFORCEMENT:
-- If under 40 words, KEEP WRITING.
-- If over 60 words, REWRITE until correct.
-        `;
-      }
-
-      if (len === "medium") {
-        return `
-STRICT WORD COUNT:
-- 80–110 words ONLY.
-
-STRUCTURE:
-- EXACTLY 2–3 paragraphs.
-- 2–3 sentences each.
-
-ENFORCEMENT:
-- If fewer than 2 paragraphs, KEEP WRITING.
-- If under 80 words, KEEP WRITING.
-- If over 110 words, REWRITE until correct.
-        `;
-      }
-
-      if (len === "long") {
-        return `
+    function lengthRules() {
+      return `
 STRICT WORD COUNT:
 - 120–150 words ONLY.
 
@@ -71,16 +39,16 @@ ENFORCEMENT (MANDATORY):
 - If total words < 120, KEEP WRITING.
 - If total words > 150, REWRITE until correct.
 - DO NOT STOP until ALL rules are satisfied.
-        `;
-      }
-
-      return "Write a 120–150 word TikTok story.";
+      `;
     }
 
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
       if (t === "soft") return "Use a soft, emotional, reflective tone.";
+      if (t === "tiktok_narrator") {
+        return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis.";
+      }
       return "Use a cinematic, descriptive story tone.";
     }
 
@@ -123,7 +91,7 @@ GLOBAL RULES (MANDATORY):
 - No filler like "Here is your story."
 
 LENGTH RULES:
-${lengthRules(length)}
+${lengthRules()}
 
 TONE RULES:
 ${toneRules(tone)}
@@ -162,9 +130,9 @@ This is non‑negotiable.
 
     let story = aiResponse.response || "";
 
-    // Remove the hidden marker before returning
+    // Strip hidden marker
     story = story.replace(/\[END OF STORY\]/g, "").trim();
-    
+
     return new Response(JSON.stringify({ story }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
