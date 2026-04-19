@@ -13,112 +13,58 @@ export default {
     const body = await request.json();
     const { topic, tone, mode } = body;
 
-    function lengthRules() {
-      return `
-STRICT WORD COUNT:
-- 120–150 words ONLY.
-
-STRICT PARAGRAPH COUNT:
-- EXACTLY 4 paragraphs.
-
-STRICT PARAGRAPH RULES:
-- Each paragraph MUST be 20–30 words.
-- Each paragraph MUST contain 2–3 sentences.
-
-STRUCTURE:
-- P1: Hook
-- P2: Setup
-- P3: Escalation
-- P4: Payoff / closing
-
-ENFORCEMENT (MANDATORY):
-- If ANY paragraph is under 20 words, EXPAND IT.
-- If ANY paragraph is over 30 words, REWRITE IT.
-- If ANY paragraph has fewer than 2 sentences, ADD MORE.
-- If ANY paragraph has more than 3 sentences, REWRITE IT.
-- If total words < 120, KEEP WRITING.
-- If total words > 150, REWRITE until correct.
-- DO NOT STOP until ALL rules are satisfied.
-      `;
-    }
-
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
       if (t === "soft") return "Use a soft, emotional, reflective tone.";
-      if (t === "tiktok_narrator") {
-        return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis.";
-      }
+      if (t === "tiktok_narrator")
+        return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis. Sentences should feel like they are read by the TikTok text‑to‑speech voice.";
       return "Use a cinematic, descriptive story tone.";
     }
-if (t === "tiktok_narrator") {
-  return "Write in the pacing and cadence of TikTok's default narrator voice: short beats, clear pauses, and clean emphasis. Sentences should feel like they are read by the TikTok text-to-speech voice.";
-}
+
     function modeRules(m) {
       if (m === "hook") {
         return `
 ONLY write the hook.
-- 1–2 sentences.
-- No story.
-- No paragraphs.
+1–2 sentences.
+No story.
         `;
       }
 
       if (m === "cta") {
         return `
 ONLY write the call‑to‑action.
-- 1–2 sentences.
-- No story.
-- No paragraphs.
+1–2 sentences.
+No story.
         `;
       }
 
       return `
 Write a full TikTok story script with CLEAR paragraph breaks.
+4 paragraphs.
+Each paragraph 2–3 sentences.
+Cinematic pacing.
       `;
     }
 
     const systemPrompt = `
-You are a TikTok story script generator. You MUST follow every rule below with zero exceptions.
+You are a TikTok story script generator.
 
-GLOBAL RULES (MANDATORY):
-- NEVER ignore length rules.
-- NEVER stop early.
-- NEVER end mid‑sentence.
-- ALWAYS finish the full narrative.
-- ALWAYS expand simple ideas with sensory detail.
-- ALWAYS output MULTIPLE PARAGRAPHS for full stories.
+RULES:
+- Write EXACTLY 4 paragraphs for full stories.
+- Each paragraph must have 2–3 sentences.
 - No emojis. No hashtags. No disclaimers.
 - No markdown formatting.
 - No filler like "Here is your story."
+- Keep pacing cinematic and TikTok‑friendly.
 
-LENGTH RULES:
-${lengthRules()}
-
-TONE RULES:
+TONE:
 ${toneRules(tone)}
 
-MODE RULES:
+MODE:
 ${modeRules(mode)}
 
-ANTI‑CUTOFF RULES (MANDATORY):
-- The story MUST end with a complete final paragraph.
-- The story MUST internally end with the hidden marker: [END OF STORY]
-- DO NOT show the marker to the user.
-- DO NOT stop before the marker.
-- If the story is not long enough, KEEP WRITING.
-- If ANY rule is not satisfied, KEEP WRITING.
-- If ANY paragraph is incomplete, KEEP WRITING.
-- If ANY sentence is incomplete, KEEP WRITING.
-- If ANY structure rule is broken, KEEP WRITING.
-- DO NOT stop until ALL rules are satisfied.
-
-OUTPUT FORMAT:
-- Plain text only.
-- Paragraphs separated by a SINGLE newline.
-- Final output MUST end with "[END OF STORY]" on its own line.
-
-This is non‑negotiable.
+END THE STORY NORMALLY. Do NOT add any markers.
     `.trim();
 
     const model = "@cf/meta/llama-3-8b-instruct";
@@ -130,10 +76,7 @@ This is non‑negotiable.
       ]
     });
 
-    let story = aiResponse.response || "";
-
-    // Strip hidden marker
-    story = story.replace(/\[END OF STORY\]/g, "").trim();
+    const story = aiResponse.response || "";
 
     return new Response(JSON.stringify({ story }), {
       headers: { "Content-Type": "application/json", ...cors }
