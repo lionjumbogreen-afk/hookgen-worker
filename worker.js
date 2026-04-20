@@ -11,7 +11,9 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode } = body;
+
+    // ⭐ HOOKGEN+ ADDITION — added plan
+    const { topic, tone, mode, plan } = body;
 
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
@@ -61,14 +63,36 @@ ENDING RULES:
       `;
     }
 
+    // ⭐ HOOKGEN+ ADDITION — Pro vs Free rules
+    let proRules = "";
+
+    if (plan === "pro") {
+      proRules = `
+PRO USER RULES:
+- Target 260–320 words.
+- Use 6–8 paragraphs.
+- Add richer sensory detail.
+- Add deeper emotional beats.
+- Maintain cinematic pacing.
+- Absolutely no early stopping.
+      `;
+    } else {
+      proRules = `
+FREE USER RULES:
+- Target 180–220 words.
+- Use 4–6 paragraphs.
+      `;
+    }
+
     const systemPrompt = `
+${proRules}
+
 You are a TikTok story script generator.
 
-Your job is to ALWAYS produce a story between 180–220 words.
+Your job is to ALWAYS produce a story between the required word range.
 If the model tries to end early, CONTINUE writing until the target range is met.
 
 STRUCTURE:
-- 4–6 paragraphs.
 - Natural pacing.
 - Smooth emotional flow.
 - No emojis. No hashtags. No markdown.
@@ -97,3 +121,4 @@ ${modeRules(mode)}
     });
   }
 };
+
