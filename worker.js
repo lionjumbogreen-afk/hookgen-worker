@@ -11,7 +11,7 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, shortPro } = body; // <-- NEW FLAG
+    const { topic, tone, mode, shortPro } = body; // NEW FLAG
 
     /* ============================================================
        1. SECURE PRO CHECK (SERVER-SIDE ONLY)
