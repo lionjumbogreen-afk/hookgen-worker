@@ -11,7 +11,7 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode } = body;
+    const { topic, tone, mode, shortPro } = body; // <-- NEW FLAG
 
     /* ============================================================
        1. SECURE PRO CHECK (SERVER-SIDE ONLY)
@@ -94,14 +94,24 @@ Do NOT output a hook.
     let planRules = "";
 
     if (isPro) {
-      planRules = `
+      if (shortPro) {
+        planRules = `
+PRO USER RULES (SHORT MODE):
+- EXACTLY 5 paragraphs.
+- 200–300 words.
+- Cinematic pacing.
+- No early stopping.
+        `;
+      } else {
+        planRules = `
 PRO USER RULES:
 - EXACTLY 10 paragraphs.
 - 400–550 words.
 - Rich sensory detail.
 - Cinematic pacing.
 - No early stopping.
-      `;
+        `;
+      }
     } else {
       planRules = `
 FREE USER RULES:
@@ -166,12 +176,10 @@ MANDATORY RULES:
         .map(p => p.trim())
         .filter(p => p.length > 0);
 
-      // Trim if too many
       if (paragraphs.length > max) {
         paragraphs = paragraphs.slice(0, max);
       }
 
-      // Merge until within range
       while (paragraphs.length < min) {
         const last = paragraphs.pop() || "";
         const secondLast = paragraphs.pop() || "";
@@ -182,15 +190,27 @@ MANDATORY RULES:
       return paragraphs.join("\n\n");
     }
 
-    const finalStory = isPro
-      ? enforceParagraphCount(story, 10, 10)
-      : enforceParagraphCount(story, 4, 4);
+    /* ============================================================
+       8. APPLY PRO/FREE PARAGRAPH RULES
+    ============================================================ */
+    let finalStory;
+
+    if (isPro) {
+      if (shortPro) {
+        finalStory = enforceParagraphCount(story, 5, 5);
+      } else {
+        finalStory = enforceParagraphCount(story, 10, 10);
+      }
+    } else {
+      finalStory = enforceParagraphCount(story, 4, 4);
+    }
 
     /* ============================================================
-       8. RETURN
+       9. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
   }
 };
+
