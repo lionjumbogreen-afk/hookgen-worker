@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const cors = {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Methods": "POST, OPTIONS"
     };
 
@@ -11,10 +11,46 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, plan } = body;
+    const { topic, tone, mode } = body;
 
     /* ============================================================
-       TONE RULES
+       1. SECURE PRO CHECK (SERVER-SIDE ONLY)
+    ============================================================ */
+
+    // Expect frontend to send: Authorization: Bearer <license_key>
+    const authHeader = request.headers.get("Authorization") || "";
+    const licenseKey = authHeader.replace("Bearer ", "").trim();
+
+    let isPro = false;
+
+    if (licenseKey) {
+      try {
+        const lsRes = await fetch("https://api.lemonsqueezy.com/v1/licenses/validate", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${env.LS_API_KEY}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            license_key: licenseKey,
+            store_id: env.LS_STORE_ID ? Number(env.LS_STORE_ID) : undefined
+          })
+        });
+
+        const lsData = await lsRes.json();
+
+        if (lsData.valid && lsData.license && lsData.license.status === "active") {
+          isPro = true;
+        }
+      } catch (err) {
+        // If LS API fails, default to free
+        isPro = false;
+      }
+    }
+
+    /* ============================================================
+       2. TONE RULES
     ============================================================ */
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
@@ -26,7 +62,7 @@ export default {
     }
 
     /* ============================================================
-       MODE RULES
+       3. MODE RULES
     ============================================================ */
     function modeRules(m) {
       if (m === "hook") {
@@ -45,7 +81,6 @@ No story.
         `;
       }
 
-      // STORY MODE
       return `
 Write a full TikTok story script.
 Use natural paragraph breaks.
@@ -56,11 +91,11 @@ Do NOT output a hook.
     }
 
     /* ============================================================
-       PRO VS FREE RULES
+       4. PRO VS FREE RULES (SERVER DECIDES)
     ============================================================ */
     let planRules = "";
 
-    if (plan === "pro") {
+    if (isPro) {
       planRules = `
 PRO USER RULES:
 - EXACTLY 6 paragraphs.
@@ -79,7 +114,7 @@ FREE USER RULES:
     }
 
     /* ============================================================
-       FINAL SYSTEM PROMPT
+       5. FINAL SYSTEM PROMPT
     ============================================================ */
     const systemPrompt = `
 ${planRules}
@@ -110,7 +145,7 @@ MANDATORY RULES:
     `.trim();
 
     /* ============================================================
-       CALL THE MODEL
+       6. CALL THE MODEL
     ============================================================ */
     const model = "@cf/meta/llama-3-8b-instruct";
 
@@ -124,7 +159,7 @@ MANDATORY RULES:
 
     const story = aiResponse.response || "";
 
-    return new Response(JSON.stringify({ story }), {
+    return new Response(JSON.stringify({ story, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
   }
