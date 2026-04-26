@@ -11,19 +11,23 @@ export default {
     }
 
     const body = await request.json();
-
-    // ⭐ HOOKGEN+ ADDITION — added plan
     const { topic, tone, mode, plan } = body;
 
+    /* ============================================================
+       TONE RULES
+    ============================================================ */
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
-      if (t === "hype") return "Use a hype, dramatic, high-energy tone.";
+      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
       if (t === "soft") return "Use a soft, emotional, reflective tone.";
       if (t === "tiktok_narrator")
         return "Write in the pacing and cadence of TikTok's narrator voice: short beats, clear pauses, clean emphasis.";
       return "Use a cinematic, descriptive story tone.";
     }
 
+    /* ============================================================
+       MODE RULES
+    ============================================================ */
     function modeRules(m) {
       if (m === "hook") {
         return `
@@ -35,75 +39,79 @@ No story.
 
       if (m === "cta") {
         return `
-ONLY write the call-to-action.
+ONLY write the call‑to‑action.
 1–2 sentences.
 No story.
         `;
       }
 
+      // STORY MODE
       return `
 Write a full TikTok story script.
-
-MANDATORY LENGTH RULES:
-- Target 180–220 words.
-- Use 4–6 paragraphs.
-- Maintain smooth pacing.
-- Expand scenes with sensory detail and emotional depth.
-- If the story is too short, continue writing until the target range is reached.
-
-STYLE RULES:
-- Cinematic pacing.
-- No emojis. No hashtags. No markdown.
-- No filler like "Here is your story."
-
-ENDING RULES:
-- The final paragraph MUST fully resolve the story.
-- NO cliffhangers.
-- NO incomplete final sentences.
+Use natural paragraph breaks.
+Do NOT stop early.
+Do NOT summarize.
+Do NOT output a hook.
       `;
     }
 
-    // ⭐ HOOKGEN+ ADDITION — Pro vs Free rules
-    let proRules = "";
+    /* ============================================================
+       PRO VS FREE RULES
+    ============================================================ */
+    let planRules = "";
 
     if (plan === "pro") {
-      proRules = `
+      planRules = `
 PRO USER RULES:
-- Target 260–320 words.
-- Use 6–8 paragraphs.
-- Add richer sensory detail.
-- Add deeper emotional beats.
-- Maintain cinematic pacing.
-- Absolutely no early stopping.
+- EXACTLY 6 paragraphs.
+- 260–320 words.
+- Rich sensory detail.
+- Cinematic pacing.
+- No early stopping.
       `;
     } else {
-      proRules = `
+      planRules = `
 FREE USER RULES:
-- Target 180–220 words.
-- Use 4–6 paragraphs.
+- EXACTLY 4 paragraphs.
+- 180–220 words.
+- Tight pacing.
       `;
     }
 
+    /* ============================================================
+       FINAL SYSTEM PROMPT
+    ============================================================ */
     const systemPrompt = `
-${proRules}
+${planRules}
 
-You are a TikTok story script generator.
+You are HookGen, an AI that writes viral TikTok story scripts.
 
-Your job is to ALWAYS produce a story between the required word range.
-If the model tries to end early, CONTINUE writing until the target range is met.
-
-STRUCTURE:
-- Natural pacing.
-- Smooth emotional flow.
-- No emojis. No hashtags. No markdown.
+TOPIC: ${topic}
 
 TONE:
 ${toneRules(tone)}
 
 MODE:
 ${modeRules(mode)}
+
+MANDATORY RULES:
+- Output ONLY the story text.
+- NO emojis.
+- NO hashtags.
+- NO markdown.
+- NO filler like "Here is your story".
+- NO disclaimers.
+- NO titles.
+- NO section headers.
+- Use natural paragraph spacing.
+- Follow the paragraph count EXACTLY.
+- Follow the word count EXACTLY.
+- If the model tries to end early, CONTINUE writing until the target range is met.
     `.trim();
 
+    /* ============================================================
+       CALL THE MODEL
+    ============================================================ */
     const model = "@cf/meta/llama-3-8b-instruct";
 
     const aiResponse = await env.AI.run(model, {
@@ -111,7 +119,7 @@ ${modeRules(mode)}
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
       ],
-      max_tokens: 900
+      max_tokens: 1200
     });
 
     const story = aiResponse.response || "";
