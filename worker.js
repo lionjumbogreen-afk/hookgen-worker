@@ -17,7 +17,6 @@ export default {
        1. SECURE PRO CHECK (SERVER-SIDE ONLY)
     ============================================================ */
 
-    // Expect frontend to send: Authorization: Bearer <license_key>
     const authHeader = request.headers.get("Authorization") || "";
     const licenseKey = authHeader.replace("Bearer ", "").trim();
 
@@ -44,7 +43,6 @@ export default {
           isPro = true;
         }
       } catch (err) {
-        // If LS API fails, default to free
         isPro = false;
       }
     }
@@ -98,8 +96,8 @@ Do NOT output a hook.
     if (isPro) {
       planRules = `
 PRO USER RULES:
-- EXACTLY 6 paragraphs.
-- 260–320 words.
+- EXACTLY 10 paragraphs.
+- 400–550 words.
 - Rich sensory detail.
 - Cinematic pacing.
 - No early stopping.
@@ -108,7 +106,7 @@ PRO USER RULES:
       planRules = `
 FREE USER RULES:
 - EXACTLY 4 paragraphs.
-- 180–220 words.
+- 150–200 words.
 - Tight pacing.
       `;
     }
@@ -154,14 +152,45 @@ MANDATORY RULES:
         { role: "system", content: systemPrompt },
         { role: "user", content: topic }
       ],
-      max_tokens: 1200
+      max_tokens: 2000
     });
 
     const story = aiResponse.response || "";
 
-    return new Response(JSON.stringify({ story, isPro }), {
+    /* ============================================================
+       7. PARAGRAPH ENFORCEMENT (SERVER-SIDE)
+    ============================================================ */
+    function enforceParagraphCount(text, min, max) {
+      let paragraphs = text
+        .split(/\n+/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+      // Trim if too many
+      if (paragraphs.length > max) {
+        paragraphs = paragraphs.slice(0, max);
+      }
+
+      // Merge until within range
+      while (paragraphs.length < min) {
+        const last = paragraphs.pop() || "";
+        const secondLast = paragraphs.pop() || "";
+        const merged = (secondLast + " " + last).trim();
+        paragraphs.push(merged);
+      }
+
+      return paragraphs.join("\n\n");
+    }
+
+    const finalStory = isPro
+      ? enforceParagraphCount(story, 10, 10)
+      : enforceParagraphCount(story, 4, 4);
+
+    /* ============================================================
+       8. RETURN
+    ============================================================ */
+    return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
   }
 };
-
