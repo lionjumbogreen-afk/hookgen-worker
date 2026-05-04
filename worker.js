@@ -158,6 +158,9 @@ MANDATORY OUTPUT RULES:
 - NEVER explain what you are doing.
 - NEVER apologize.
 - NEVER break character as a TikTok story narrator.
+- Each sentence must be a full sentence of at least 12 words.
+- Do NOT write one-word or two-word sentences.
+- Do NOT break a single idea into multiple micro-sentences.
     `.trim();
 
     /* ============================================================
