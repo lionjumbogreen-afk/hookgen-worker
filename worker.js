@@ -11,7 +11,7 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, proGen, format } = body; 
+    const { topic, tone, mode, proGen, format } = body;
     // FREE: format = "short" | "medium" | "long"
     // PRO:  format = "line" | "cinematic"
 
@@ -189,7 +189,7 @@ MANDATORY OUTPUT RULES:
     story = story
       .replace(/\r/g, "")
       .replace(/\s+/g, " ")
-      .replace(/([.!?])\s+/g, "$1\n") // force line breaks after sentence end
+      .replace(/([.!?])\s+/g, "$1\n")
       .split("\n")
       .map(s => s.trim())
       .filter(s => s.length > 0);
@@ -209,33 +209,30 @@ MANDATORY OUTPUT RULES:
     ============================================================ */
 
     function takeSentences(lines, count) {
-      if (lines.length === 0) return "";
       return lines.slice(0, count).join(" ");
     }
 
     function twoParagraphsFromSentences(lines, totalSentences) {
-      if (lines.length === 0) return "";
       const trimmed = lines.slice(0, totalSentences);
       const half = Math.ceil(trimmed.length / 2);
       const p1 = trimmed.slice(0, half).join(" ");
       const p2 = trimmed.slice(half).join(" ");
-      return [p1, p2].filter(p => p.length > 0).join("\n\n");
+      return `${p1}\n\n${p2}`;
     }
 
     function enforceLines(lines, max) {
-      if (lines.length > max) lines = lines.slice(0, max);
-      return lines.join("\n");
+      return lines.slice(0, max).join("\n");
     }
 
     function enforceParagraphs(lines, count) {
-      if (lines.length === 0) return "";
       let paragraphs = [];
       let chunkSize = Math.max(1, Math.ceil(lines.length / count));
 
       for (let i = 0; i < count; i++) {
         const chunk = lines.slice(i * chunkSize, (i + 1) * chunkSize);
-        if (chunk.length === 0) continue;
-        paragraphs.push(chunk.join(" "));
+        if (chunk.length > 0) {
+          paragraphs.push(chunk.join(" "));
+        }
       }
 
       return paragraphs.join("\n\n");
@@ -248,18 +245,14 @@ MANDATORY OUTPUT RULES:
     let finalStory;
 
     if (mode === "hook") {
-      // hook = 1–2 sentences max
-      const hookLines = story.slice(0, 2);
-      finalStory = hookLines.join(" ");
+      finalStory = story.slice(0, 2).join(" ");
     } else if (isPro && proGen) {
       if (format === "cinematic") {
         finalStory = enforceParagraphs(story, 4);
       } else {
-        // line mode or fallback
         finalStory = enforceLines(story, 20);
       }
     } else {
-      // FREE STORY MODE — use format as length selector
       const len = format || "medium";
 
       if (len === "short") {
@@ -279,3 +272,4 @@ MANDATORY OUTPUT RULES:
     });
   }
 };
+
