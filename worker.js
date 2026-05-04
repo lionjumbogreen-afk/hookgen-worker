@@ -165,6 +165,8 @@ MANDATORY OUTPUT RULES:
 - Do NOT write sentence fragments.
 - Do NOT split a single idea into multiple short sentences.
 - Every sentence must read like a natural spoken TikTok narrator line.
+- Do NOT write dramatic one-word or two-word sentences such as "Five." or "Years." or "Silence."
+- Every sentence must contain a complete idea and must NOT be split into multiple short beats.
     `.trim();
 
     /* ============================================================
