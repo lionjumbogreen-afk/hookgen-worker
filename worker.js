@@ -177,19 +177,20 @@ MANDATORY OUTPUT RULES:
 - NEVER explain what you are doing.
 - NEVER apologize.
 - NEVER break character as a TikTok story narrator.
-- Each sentence must be a full sentence of at least 12 words.
-- Do NOT write one-word or two-word sentences.
-- Do NOT break a single idea into multiple micro-sentences.
-- Each sentence must be between 12 and 20 words.
-- Do NOT write sentence fragments.
-- Do NOT split a single idea into multiple short sentences.
-- Every sentence must read like a natural spoken TikTok narrator line.
-- Do NOT write dramatic one-word or two-word sentences such as "Five." or "Years." or "Silence."
-- Every sentence must contain a complete idea and must NOT be split into multiple short beats.
+
+### SENTENCE RULES (STRICT)
+- Every sentence must be between 12 and 17 words.
+- Each sentence must be a complete idea.
 - End every sentence with a period.
 - Do NOT chain multiple ideas together with commas.
-- Each sentence must be a complete idea ending with a period.
-    `.trim();
+- Use NO MORE than one comma per sentence.
+- Do NOT write run-on sentences.
+- Do NOT write sentence fragments.
+- Do NOT split a single idea into multiple short sentences.
+- Do NOT write one-word or two-word sentences.
+- Do NOT write dramatic beats like "Five." or "Years." or "Silence."
+- Every sentence must read like a natural spoken TikTok narrator line.
+  `.trim();
 
     /* ============================================================
        6. CALL MODEL
