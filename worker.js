@@ -14,25 +14,23 @@ export default {
     const { topic, tone, mode, proGen, format } = body;
 
     /* ============================================================
-       HOOK DETECTION (for story mode)
+       HOOK DETECTION
     ============================================================ */
-   function looksLikeHook(text) {
-  return (
-    text.length < 180 &&
-    (
-      /you|your|i|my|mom|dad|call|keeps|secret|mistake|truth|nobody|no one|here|this|that/i.test(text) ||
-      /^[^.!?]{5,160}$/.test(text)
-    )
-  );
-}
-
+    function looksLikeHook(text) {
+      return (
+        text.length < 180 &&
+        (
+          /you|your|i|my|mom|dad|call|keeps|secret|mistake|truth|nobody|no one|here|this|that/i.test(text) ||
+          /^[^.!?]{5,160}$/.test(text)
+        )
+      );
+    }
 
     /* ============================================================
-       1. SECURE PRO CHECK
+       PRO LICENSE CHECK
     ============================================================ */
     const authHeader = request.headers.get("Authorization") || "";
     const licenseKey = authHeader.replace("Bearer ", "").trim();
-
     let isPro = false;
 
     if (licenseKey) {
@@ -60,109 +58,94 @@ export default {
     }
 
     /* ============================================================
-       2. TONE RULES
+       TONE RULES
     ============================================================ */
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
       if (t === "soft") return "Use a soft, emotional, reflective tone.";
       if (t === "tiktok_narrator")
-        return "Write in the pacing and cadence of TikTok's narrator voice: short beats, clear pauses, clean emphasis.";
+        return "Write in the pacing and cadence of TikTok's narrator voice: clean beats, steady rhythm, natural spoken flow.";
       return "Use a cinematic, descriptive story tone.";
     }
 
     /* ============================================================
-       3. MODE RULES
+       MODE RULES
     ============================================================ */
     function modeRules(m) {
-  if (m === "hook") {
-    return `
+      if (m === "hook") {
+        return `
 ONLY write the hook.
 1–2 sentences.
 No story.
 No introductions.
 Start immediately with the hook.
-    `;
-  }
+        `;
+      }
 
-  return `
+      return `
 Write a full TikTok story.
 Do NOT introduce the story.
 Do NOT say "here's your script" or anything similar.
 Start immediately with the first sentence of the story.
 Do NOT summarize.
 Do NOT explain.
-    `;
-}
-
+      `;
+    }
 
     /* ============================================================
-       4. PRO GEN / FREE RULES
+       GENERATION RULES (FREE + PRO)
     ============================================================ */
 
     let generationRules = "";
 
-if (isPro && proGen) {
-  if (format === "line") {
-    generationRules = `
+    if (isPro && proGen) {
+      if (format === "line") {
+        generationRules = `
 PRO GEN — LINE MODE:
 - Write 12–20 lines.
-- Each line must be a full sentence between 12 and 20 words.
+- Each line must be a full sentence between 12 and 17 words.
 - No micro-sentences or fragments.
 - No dramatic one-word beats.
-- Every line must read like a natural TikTok narrator sentence.
 - FORCE a line break after every sentence.
 - No paragraphs.
-    `;
-  } else if (format === "cinematic") {
-    generationRules = `
+        `;
+      } else if (format === "cinematic") {
+        generationRules = `
 PRO GEN — CINEMATIC MODE:
 - EXACTLY 4 paragraphs.
-- Each paragraph must contain full sentences between 12 and 20 words.
+- Each paragraph must contain full sentences between 12 and 17 words.
 - No micro-sentences or fragments.
 - No dramatic one-word beats.
 - Cinematic pacing with rich sensory detail.
-- Every sentence must read like a natural TikTok narrator line.
-    `;
-  } else {
-    generationRules = `
+        `;
+      } else {
+        generationRules = `
 PRO GEN — DEFAULT:
 - Write 12–20 lines.
-- Each line must be a full sentence between 12 and 20 words.
+- Each line must be a full sentence between 12 and 17 words.
 - No micro-sentences or fragments.
 - No dramatic one-word beats.
-- Every line must read like a natural TikTok narrator sentence.
-    `;
-  }
-} else {
-  generationRules = `
+        `;
+      }
+    } else {
+      generationRules = `
 FREE MODE:
 - "short": 5 full sentences.
 - "medium": 7 full sentences.
 - "long": 10 full sentences split into 2 paragraphs.
-- Every sentence must be between 12 and 20 words.
+- Every sentence must be between 12 and 17 words.
 - No micro-sentences or fragments.
 - No dramatic one-word beats.
 - Every sentence must read like a natural TikTok narrator line.
-  `;
-}
+      `;
+    }
 
     /* ============================================================
-       5. SYSTEM PROMPT
+       SYSTEM PROMPT (FINAL VERSION)
     ============================================================ */
     const systemPrompt = `
-You are HookGen, an AI that writes viral TikTok story scripts.
-
-TOPIC: ${topic}
-
-TONE:
-${toneRules(tone)}
-
-MODE:
-${modeRules(mode)}
-
-GENERATION RULES:
-${generationRules}
+You are an AI that writes TikTok-style narrator stories with strict structural and sentence rules.
 
 MANDATORY OUTPUT RULES:
 - Output ONLY the story text.
@@ -182,18 +165,27 @@ MANDATORY OUTPUT RULES:
 - Every sentence must be between 12 and 17 words.
 - Each sentence must be a complete idea.
 - End every sentence with a period.
-- Do NOT chain multiple ideas together with commas.
 - Use NO MORE than one comma per sentence.
+- Do NOT chain multiple ideas together with commas.
 - Do NOT write run-on sentences.
 - Do NOT write sentence fragments.
 - Do NOT split a single idea into multiple short sentences.
 - Do NOT write one-word or two-word sentences.
 - Do NOT write dramatic beats like "Five." or "Years." or "Silence."
 - Every sentence must read like a natural spoken TikTok narrator line.
-  `.trim();
+
+### TONE RULES
+${toneRules(tone)}
+
+### MODE RULES
+${modeRules(mode)}
+
+### GENERATION RULES
+${generationRules}
+`;
 
     /* ============================================================
-       6. CALL MODEL
+       RUN MODEL
     ============================================================ */
     const model = "@cf/meta/llama-3-8b-instruct";
 
@@ -208,19 +200,18 @@ MANDATORY OUTPUT RULES:
     let story = aiResponse.response || "";
 
     /* ============================================================
-       7. CLEAN + SPLIT INTO SENTENCES
+       CLEAN + SPLIT SENTENCES
     ============================================================ */
-
     story = story
-  .replace(/\r/g, "")
-  .replace(/\s+/g, " ")
-  .replace(/([.!?])\s+(?=[A-Z0-9])/g, "$1\n")
-  .split("\n")
-  .map(s => s.trim())
-  .filter(s => s.length > 0);
+      .replace(/\r/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/([.!?])\s+(?=[A-Z0-9])/g, "$1\n")
+      .split("\n")
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
 
     /* ============================================================
-       8. REMOVE DUPLICATES
+       REMOVE DUPLICATES
     ============================================================ */
     const seen = new Set();
     story = story.filter(line => {
@@ -230,16 +221,15 @@ MANDATORY OUTPUT RULES:
     });
 
     /* ============================================================
-       9. FORCE STORY TO START WITH USER HOOK
+       FORCE HOOK FIRST
     ============================================================ */
     if (mode !== "hook" && looksLikeHook(topic)) {
       story.unshift(topic);
     }
 
     /* ============================================================
-       10. FORMAT HELPERS
+       FORMAT HELPERS
     ============================================================ */
-
     function takeSentences(lines, count) {
       return lines.slice(0, count).join(" ");
     }
@@ -265,65 +255,40 @@ MANDATORY OUTPUT RULES:
     }
 
     /* ============================================================
-   11. FINAL OUTPUT (FIXED)
-============================================================ */
+       FINAL OUTPUT
+    ============================================================ */
+    let finalStory;
 
-let finalStory;
-
-// HOOK MODE
-if (mode === "hook") {
-  finalStory = story.slice(0, 2).join(" ");
-
-// CINEMATIC ALWAYS WINS (free or pro)
-} else if (format === "cinematic") {
-  // Pro Gen cinematic = 4 paragraphs
-  // Free Mode cinematic = also 4 paragraphs
-  finalStory = enforceParagraphs(story, 4);
-
-// PRO GEN
-} else if (isPro && proGen) {
-
-  // LINE MODE (12–20 full sentences, each on its own line)
-  if (format === "line") {
-    finalStory = enforceLines(story, 20);
-
-  // PRO GEN SHORT (5 full sentences)
-  } else if (format === "short") {
-    finalStory = takeSentences(story, 5);
-
-  // PRO GEN MEDIUM (7 full sentences)
-  } else if (format === "medium") {
-    finalStory = takeSentences(story, 7);
-
-  // PRO GEN LONG (10 full sentences, 2 paragraphs)
-  } else if (format === "long") {
-    finalStory = twoParagraphs(story, 10);
-
-  // DEFAULT PRO GEN (12–20 lines)
-  } else {
-    finalStory = enforceLines(story, 20);
-  }
-
-// FREE MODE
-} else {
-
-  if (format === "short") {
-    finalStory = takeSentences(story, 5);
-
-  } else if (format === "medium") {
-    finalStory = takeSentences(story, 7);
-
-  } else if (format === "long") {
-    finalStory = twoParagraphs(story, 10);
-
-  } else {
-    // fallback for free mode
-    finalStory = takeSentences(story, 7);
-  }
-}
+    if (mode === "hook") {
+      finalStory = story.slice(0, 2).join(" ");
+    } else if (format === "cinematic") {
+      finalStory = enforceParagraphs(story, 4);
+    } else if (isPro && proGen) {
+      if (format === "line") {
+        finalStory = enforceLines(story, 20);
+      } else if (format === "short") {
+        finalStory = takeSentences(story, 5);
+      } else if (format === "medium") {
+        finalStory = takeSentences(story, 7);
+      } else if (format === "long") {
+        finalStory = twoParagraphs(story, 10);
+      } else {
+        finalStory = enforceLines(story, 20);
+      }
+    } else {
+      if (format === "short") {
+        finalStory = takeSentences(story, 5);
+      } else if (format === "medium") {
+        finalStory = takeSentences(story, 7);
+      } else if (format === "long") {
+        finalStory = twoParagraphs(story, 10);
+      } else {
+        finalStory = takeSentences(story, 7);
+      }
+    }
 
     /* ============================================================
-       12. RETURN
+       RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
