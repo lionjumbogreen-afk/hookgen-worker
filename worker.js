@@ -247,16 +247,16 @@ MANDATORY RULES:
       return paragraphs.join("\n\n");
     }
 
-    /* ============================================================
+   /* ============================================================
    8. APPLY RULES
 ============================================================ */
 let finalStory;
 
 if (mode === "hook" || mode === "cta") {
-  // For hook/CTA, just return what the model gave
+  // Hook or CTA → return raw model output
   finalStory = story;
 } else if (!isPro && (length === "short" || length === "medium" || length === "long")) {
-  // Free + length mode → line-format story, no paragraph enforcement
+  // Free + length mode → line-format story
   finalStory = story;
 } else {
   // Paragraph enforcement for story mode
