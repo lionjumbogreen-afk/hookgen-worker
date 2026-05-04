@@ -152,6 +152,8 @@ MANDATORY OUTPUT RULES:
 - NO markdown.
 - NEVER repeat the same sentence.
 - NEVER loop.
+- NEVER write introductions like "Here's a script", "Here's your TikTok story", or anything similar.
+- Start immediately with the story or the hook.
     `.trim();
 
     /* ============================================================
