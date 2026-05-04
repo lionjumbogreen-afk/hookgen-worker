@@ -238,16 +238,16 @@ MANDATORY OUTPUT RULES:
 
    let finalStory;
 
+// HOOK MODE
 if (mode === "hook") {
-  // Hook mode: always 1–2 sentences
   finalStory = story.slice(0, 2).join(" ");
 
+// CINEMATIC ALWAYS WINS (free or pro)
 } else if (format === "cinematic") {
-  // CINEMATIC ALWAYS WINS — free or pro
   finalStory = enforceParagraphs(story, 4);
 
+// PRO GEN (same lengths as free, but more polished)
 } else if (isPro && proGen) {
-  // PRO GEN — same lengths as free, but more polished
   if (format === "line") {
     finalStory = enforceLines(story, 20);
   } else if (format === "short") {
@@ -257,12 +257,11 @@ if (mode === "hook") {
   } else if (format === "long") {
     finalStory = twoParagraphs(story, 10);
   } else {
-    // fallback for weird formats
     finalStory = takeSentences(story, 7);
   }
 
+// FREE MODE
 } else {
-  // FREE MODE
   if (format === "short") {
     finalStory = takeSentences(story, 5);
   } else if (format === "medium") {
@@ -271,6 +270,7 @@ if (mode === "hook") {
     finalStory = twoParagraphs(story, 10);
   }
 }
+
 
 
     /* ============================================================
