@@ -115,7 +115,6 @@ PRO GEN — CINEMATIC MODE:
         `;
       }
     } else {
-      // FREE MODE
       generationRules = `
 FREE MODE:
 - 6–10 lines.
@@ -159,9 +158,10 @@ MANDATORY OUTPUT RULES:
 - NO titles.
 - NO section headers.
 - Follow the format EXACTLY.
-- NEVER repeat the same sentence twice.
-- NEVER repeat the same paragraph twice.
-- NEVER loop or restate the same idea.
+- NEVER repeat the same sentence.
+- NEVER repeat the same idea.
+- NEVER loop.
+- BREAK after every sentence.
     `.trim();
 
     /* ============================================================
@@ -180,79 +180,64 @@ MANDATORY OUTPUT RULES:
     let story = aiResponse.response || "";
 
     /* ============================================================
-       7. CLEANING: REMOVE DUPLICATES
+       7. HARD CLEANING: SPLIT SENTENCES
     ============================================================ */
 
-    function removeRepeats(text) {
-      const lines = text.split("\n").map(l => l.trim());
-      const seen = new Set();
-      const cleaned = [];
-
-      for (const line of lines) {
-        if (!seen.has(line)) {
-          cleaned.push(line);
-          seen.add(line);
-        }
-      }
-
-      return cleaned.join("\n");
-    }
-
-    story = removeRepeats(story);
+    story = story
+      .replace(/\r/g, "")
+      .replace(/([.!?])\s+/g, "$1\n")   // force line breaks
+      .split("\n")
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
 
     /* ============================================================
-       8. FORMAT ENFORCEMENT
+       8. REMOVE REPEATED SENTENCES
+    ============================================================ */
+    const seen = new Set();
+    story = story.filter(line => {
+      if (seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
+
+    /* ============================================================
+       9. FORMAT ENFORCEMENT
     ============================================================ */
 
-    function enforceLines(text, min, max) {
-      let lines = text
-        .split(/\n+/)
-        .map(l => l.trim())
-        .filter(l => l.length > 0);
-
+    function enforceLines(lines, min, max) {
       if (lines.length > max) lines = lines.slice(0, max);
-
-      while (lines.length < min) {
-        lines.push(lines[lines.length - 1] || "");
-      }
-
+      while (lines.length < min) lines.push(lines[lines.length - 1] || "");
       return lines.join("\n");
     }
 
-    function enforceParagraphs(text, count) {
-      let paragraphs = text
-        .split(/\n+/)
-        .map(p => p.trim())
-        .filter(p => p.length > 0);
+    function enforceParagraphs(lines, count) {
+      let paragraphs = [];
+      let chunkSize = Math.ceil(lines.length / count);
 
-      if (paragraphs.length > count) {
-        paragraphs = paragraphs.slice(0, count);
-      }
-
-      while (paragraphs.length < count) {
-        paragraphs.push(paragraphs[paragraphs.length - 1] || "");
+      for (let i = 0; i < count; i++) {
+        const chunk = lines.slice(i * chunkSize, (i + 1) * chunkSize);
+        paragraphs.push(chunk.join(" "));
       }
 
       return paragraphs.join("\n\n");
     }
 
-    let finalStory = story;
+    let finalStory;
 
     if (mode === "hook" || mode === "cta") {
-      // leave raw
+      finalStory = story.join(" ");
     } else if (isPro && proGen) {
       if (format === "line") {
         finalStory = enforceLines(story, 12, 20);
-      } else if (format === "cinematic") {
+      } else {
         finalStory = enforceParagraphs(story, 4);
       }
     } else {
-      // FREE MODE
       finalStory = enforceLines(story, 6, 10);
     }
 
     /* ============================================================
-       9. RETURN
+       10. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
