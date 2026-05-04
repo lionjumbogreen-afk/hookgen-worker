@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
 
     /* ============================================================
-       WEBHOOK HANDLER (FIXED + PATCHED)
+       WEBHOOK HANDLER (FINAL PATCHED VERSION)
     ============================================================ */
     if (url.pathname === "/webhook") {
       const cors = {
@@ -57,6 +57,14 @@ export default {
         data = JSON.parse(bodyText);
       } catch {
         return new Response("Bad JSON", { status: 400, headers: cors });
+      }
+
+      // Extract event name
+      const event = data?.meta?.event_name || "";
+
+      // Only process license events
+      if (event !== "license_key_created" && event !== "license_key_updated") {
+        return new Response("Ignored", { status: 200, headers: cors });
       }
 
       // Extract license info
