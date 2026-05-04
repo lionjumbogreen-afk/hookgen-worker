@@ -11,7 +11,9 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, proGen, format, length } = body; // length: "short" | "medium" | "long"
+    const { topic, tone, mode, proGen, format } = body; 
+    // FREE: format = "short" | "medium" | "long"
+    // PRO:  format = "line" | "cinematic"
 
     /* ============================================================
        1. SECURE PRO CHECK
@@ -69,7 +71,6 @@ No story.
         `;
       }
 
-      // default = full story
       return `
 Write a full TikTok story script.
 Do NOT stop early.
@@ -121,10 +122,10 @@ PRO GEN — DEFAULT:
     } else {
       generationRules = `
 FREE MODE:
-- Write a TikTok story based on the selected length:
-  - Short: about 5 sentences.
-  - Medium: about 7 sentences.
-  - Long: about 10 sentences total, split into 2 paragraphs.
+- Use the selected length:
+  - "short": about 5 sentences.
+  - "medium": about 7 sentences.
+  - "long": about 10 sentences total, split into 2 paragraphs.
 - No emojis.
 - No hashtags.
 - No markdown.
@@ -258,17 +259,14 @@ MANDATORY OUTPUT RULES:
         finalStory = enforceLines(story, 20);
       }
     } else {
-      // FREE STORY MODE with length control
-      const len = length || "medium";
+      // FREE STORY MODE — use format as length selector
+      const len = format || "medium";
 
       if (len === "short") {
-        // 5 sentences, single block
         finalStory = takeSentences(story, 5);
       } else if (len === "medium") {
-        // 7 sentences, single block
         finalStory = takeSentences(story, 7);
       } else {
-        // long: 10 sentences, 2 paragraphs
         finalStory = twoParagraphsFromSentences(story, 10);
       }
     }
