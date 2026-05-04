@@ -12,8 +12,6 @@ export default {
 
     const body = await request.json();
     const { topic, tone, mode, proGen, format } = body;
-    // FREE: format = "short" | "medium" | "long"
-    // PRO:  format = "line" | "cinematic"
 
     /* ============================================================
        1. SECURE PRO CHECK
@@ -93,9 +91,6 @@ PRO GEN — LINE MODE:
 - 1 short sentence per line.
 - FORCE a line break after every sentence.
 - No paragraphs.
-- No emojis.
-- No hashtags.
-- No markdown.
         `;
       } else if (format === "cinematic") {
         generationRules = `
@@ -103,32 +98,19 @@ PRO GEN — CINEMATIC MODE:
 - EXACTLY 4 paragraphs.
 - Cinematic pacing.
 - Rich sensory detail.
-- No emojis.
-- No hashtags.
-- No markdown.
         `;
       } else {
         generationRules = `
 PRO GEN — DEFAULT:
 - 12–20 lines.
-- 1 short sentence per line.
-- FORCE a line break after every sentence.
-- No paragraphs.
-- No emojis.
-- No hashtags.
-- No markdown.
         `;
       }
     } else {
       generationRules = `
 FREE MODE:
-- Use the selected length:
-  - "short": about 5 sentences.
-  - "medium": about 7 sentences.
-  - "long": about 10 sentences total, split into 2 paragraphs.
-- No emojis.
-- No hashtags.
-- No markdown.
+- "short": ~5 sentences.
+- "medium": ~7 sentences.
+- "long": ~10 sentences, split into 2 paragraphs.
       `;
     }
 
@@ -139,10 +121,6 @@ FREE MODE:
 You are HookGen, an AI that writes viral TikTok story scripts.
 
 TOPIC: ${topic}
-
-STARTING RULE:
-- If the user input is written like a hook, the story MUST begin with the exact text the user typed.
-- If the user input is a topic, DO NOT start with it. Create a strong hook inspired by it.
 
 TONE:
 ${toneRules(tone)}
@@ -158,12 +136,7 @@ MANDATORY OUTPUT RULES:
 - NO emojis.
 - NO hashtags.
 - NO markdown.
-- NO filler.
-- NO disclaimers.
-- NO titles.
-- NO section headers.
 - NEVER repeat the same sentence.
-- NEVER repeat the same idea.
 - NEVER loop.
     `.trim();
 
@@ -183,7 +156,7 @@ MANDATORY OUTPUT RULES:
     let story = aiResponse.response || "";
 
     /* ============================================================
-       7. HARD CLEANING: SPLIT SENTENCES
+       7. CLEAN + SPLIT INTO SENTENCES
     ============================================================ */
 
     story = story
@@ -195,7 +168,7 @@ MANDATORY OUTPUT RULES:
       .filter(s => s.length > 0);
 
     /* ============================================================
-       8. REMOVE REPEATED SENTENCES
+       8. REMOVE DUPLICATES
     ============================================================ */
     const seen = new Set();
     story = story.filter(line => {
@@ -212,12 +185,10 @@ MANDATORY OUTPUT RULES:
       return lines.slice(0, count).join(" ");
     }
 
-    function twoParagraphsFromSentences(lines, totalSentences) {
-      const trimmed = lines.slice(0, totalSentences);
+    function twoParagraphs(lines, total) {
+      const trimmed = lines.slice(0, total);
       const half = Math.ceil(trimmed.length / 2);
-      const p1 = trimmed.slice(0, half).join(" ");
-      const p2 = trimmed.slice(half).join(" ");
-      return `${p1}\n\n${p2}`;
+      return trimmed.slice(0, half).join(" ") + "\n\n" + trimmed.slice(half).join(" ");
     }
 
     function enforceLines(lines, max) {
@@ -225,21 +196,17 @@ MANDATORY OUTPUT RULES:
     }
 
     function enforceParagraphs(lines, count) {
-      let paragraphs = [];
-      let chunkSize = Math.max(1, Math.ceil(lines.length / count));
-
+      let out = [];
+      let chunk = Math.ceil(lines.length / count);
       for (let i = 0; i < count; i++) {
-        const chunk = lines.slice(i * chunkSize, (i + 1) * chunkSize);
-        if (chunk.length > 0) {
-          paragraphs.push(chunk.join(" "));
-        }
+        const part = lines.slice(i * chunk, (i + 1) * chunk);
+        if (part.length) out.push(part.join(" "));
       }
-
-      return paragraphs.join("\n\n");
+      return out.join("\n\n");
     }
 
     /* ============================================================
-       10. FINAL FORMAT DECISION
+       10. FINAL OUTPUT
     ============================================================ */
 
     let finalStory;
@@ -253,14 +220,12 @@ MANDATORY OUTPUT RULES:
         finalStory = enforceLines(story, 20);
       }
     } else {
-      const len = format || "medium";
-
-      if (len === "short") {
+      if (format === "short") {
         finalStory = takeSentences(story, 5);
-      } else if (len === "medium") {
+      } else if (format === "medium") {
         finalStory = takeSentences(story, 7);
       } else {
-        finalStory = twoParagraphsFromSentences(story, 10);
+        finalStory = twoParagraphs(story, 10);
       }
     }
 
@@ -272,4 +237,3 @@ MANDATORY OUTPUT RULES:
     });
   }
 };
-
