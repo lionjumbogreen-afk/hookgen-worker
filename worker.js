@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
 
     /* ============================================================
-       WEBHOOK HANDLER (NEW)
+       WEBHOOK HANDLER (FIXED + PATCHED)
     ============================================================ */
     if (url.pathname === "/webhook") {
       const cors = {
@@ -16,13 +16,21 @@ export default {
         return new Response(null, { headers: cors });
       }
 
-      let bodyText = await request.text();
-      let signature = request.headers.get("X-Signature") || "";
+      const bodyText = await request.text();
+      const signature = request.headers.get("X-Signature") || "";
 
-      // Basic signature check
+      // Convert HEX → Uint8Array (Lemon Squeezy uses HEX signatures)
+      function hexToUint8(hex) {
+        const bytes = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < bytes.length; i++) {
+          bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+        }
+        return bytes;
+      }
+
       const encoder = new TextEncoder();
       const keyData = encoder.encode(env.LEMON_SECRET || "");
-      const sigData = encoder.encode(bodyText);
+      const signatureBytes = hexToUint8(signature);
 
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
@@ -35,8 +43,8 @@ export default {
       const isValid = await crypto.subtle.verify(
         "HMAC",
         cryptoKey,
-        Uint8Array.from(atob(signature), c => c.charCodeAt(0)),
-        sigData
+        signatureBytes,
+        encoder.encode(bodyText)
       ).catch(() => false);
 
       if (!isValid) {
@@ -52,7 +60,6 @@ export default {
       }
 
       // Extract license info
-      const event = data?.meta?.event_name || "";
       const licenseKey = data?.data?.attributes?.key || "";
       const status = data?.data?.attributes?.status || "";
 
