@@ -14,6 +14,16 @@ export default {
     const { topic, tone, mode, proGen, format } = body;
 
     /* ============================================================
+       HOOK DETECTION (for story mode)
+    ============================================================ */
+    function looksLikeHook(text) {
+      return (
+        text.length < 140 &&
+        /you|your|here|this|that|stop|wait|listen|mistake|secret|one thing/i.test(text)
+      );
+    }
+
+    /* ============================================================
        1. SECURE PRO CHECK
     ============================================================ */
     const authHeader = request.headers.get("Authorization") || "";
@@ -178,7 +188,14 @@ MANDATORY OUTPUT RULES:
     });
 
     /* ============================================================
-       9. FORMAT HELPERS
+       9. FORCE STORY TO START WITH USER HOOK
+    ============================================================ */
+    if (mode !== "hook" && looksLikeHook(topic)) {
+      story.unshift(topic);
+    }
+
+    /* ============================================================
+       10. FORMAT HELPERS
     ============================================================ */
 
     function takeSentences(lines, count) {
@@ -206,7 +223,7 @@ MANDATORY OUTPUT RULES:
     }
 
     /* ============================================================
-       10. FINAL OUTPUT
+       11. FINAL OUTPUT
     ============================================================ */
 
     let finalStory;
@@ -230,7 +247,7 @@ MANDATORY OUTPUT RULES:
     }
 
     /* ============================================================
-       11. RETURN
+       12. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
