@@ -11,7 +11,7 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, proGen, format } = body;
+    const { topic, tone, mode, proGen, format, length } = body; // length: "short" | "medium" | "long"
 
     /* ============================================================
        1. SECURE PRO CHECK
@@ -69,14 +69,7 @@ No story.
         `;
       }
 
-      if (m === "cta") {
-        return `
-ONLY write the call‑to‑action.
-1–2 sentences.
-No story.
-        `;
-      }
-
+      // default = full story
       return `
 Write a full TikTok story script.
 Do NOT stop early.
@@ -86,7 +79,7 @@ Do NOT output a hook unless the user typed one.
     }
 
     /* ============================================================
-       4. PRO GEN RULES
+       4. PRO GEN / FREE RULES
     ============================================================ */
 
     let generationRules = "";
@@ -113,14 +106,25 @@ PRO GEN — CINEMATIC MODE:
 - No hashtags.
 - No markdown.
         `;
+      } else {
+        generationRules = `
+PRO GEN — DEFAULT:
+- 12–20 lines.
+- 1 short sentence per line.
+- FORCE a line break after every sentence.
+- No paragraphs.
+- No emojis.
+- No hashtags.
+- No markdown.
+        `;
       }
     } else {
       generationRules = `
 FREE MODE:
-- 6–10 lines.
-- 1 short sentence per line.
-- FORCE a line break after every sentence.
-- No paragraphs.
+- Write a TikTok story based on the selected length:
+  - Short: about 5 sentences.
+  - Medium: about 7 sentences.
+  - Long: about 10 sentences total, split into 2 paragraphs.
 - No emojis.
 - No hashtags.
 - No markdown.
@@ -157,11 +161,9 @@ MANDATORY OUTPUT RULES:
 - NO disclaimers.
 - NO titles.
 - NO section headers.
-- Follow the format EXACTLY.
 - NEVER repeat the same sentence.
 - NEVER repeat the same idea.
 - NEVER loop.
-- BREAK after every sentence.
     `.trim();
 
     /* ============================================================
@@ -185,7 +187,8 @@ MANDATORY OUTPUT RULES:
 
     story = story
       .replace(/\r/g, "")
-      .replace(/([.!?])\s+/g, "$1\n")   // force line breaks
+      .replace(/\s+/g, " ")
+      .replace(/([.!?])\s+/g, "$1\n") // force line breaks after sentence end
       .split("\n")
       .map(s => s.trim())
       .filter(s => s.length > 0);
@@ -201,43 +204,77 @@ MANDATORY OUTPUT RULES:
     });
 
     /* ============================================================
-       9. FORMAT ENFORCEMENT
+       9. FORMAT HELPERS
     ============================================================ */
 
-    function enforceLines(lines, min, max) {
+    function takeSentences(lines, count) {
+      if (lines.length === 0) return "";
+      return lines.slice(0, count).join(" ");
+    }
+
+    function twoParagraphsFromSentences(lines, totalSentences) {
+      if (lines.length === 0) return "";
+      const trimmed = lines.slice(0, totalSentences);
+      const half = Math.ceil(trimmed.length / 2);
+      const p1 = trimmed.slice(0, half).join(" ");
+      const p2 = trimmed.slice(half).join(" ");
+      return [p1, p2].filter(p => p.length > 0).join("\n\n");
+    }
+
+    function enforceLines(lines, max) {
       if (lines.length > max) lines = lines.slice(0, max);
-      while (lines.length < min) lines.push(lines[lines.length - 1] || "");
       return lines.join("\n");
     }
 
     function enforceParagraphs(lines, count) {
+      if (lines.length === 0) return "";
       let paragraphs = [];
-      let chunkSize = Math.ceil(lines.length / count);
+      let chunkSize = Math.max(1, Math.ceil(lines.length / count));
 
       for (let i = 0; i < count; i++) {
         const chunk = lines.slice(i * chunkSize, (i + 1) * chunkSize);
+        if (chunk.length === 0) continue;
         paragraphs.push(chunk.join(" "));
       }
 
       return paragraphs.join("\n\n");
     }
 
+    /* ============================================================
+       10. FINAL FORMAT DECISION
+    ============================================================ */
+
     let finalStory;
 
-    if (mode === "hook" || mode === "cta") {
-      finalStory = story.join(" ");
+    if (mode === "hook") {
+      // hook = 1–2 sentences max
+      const hookLines = story.slice(0, 2);
+      finalStory = hookLines.join(" ");
     } else if (isPro && proGen) {
-      if (format === "line") {
-        finalStory = enforceLines(story, 12, 20);
-      } else {
+      if (format === "cinematic") {
         finalStory = enforceParagraphs(story, 4);
+      } else {
+        // line mode or fallback
+        finalStory = enforceLines(story, 20);
       }
     } else {
-      finalStory = enforceLines(story, 6, 10);
+      // FREE STORY MODE with length control
+      const len = length || "medium";
+
+      if (len === "short") {
+        // 5 sentences, single block
+        finalStory = takeSentences(story, 5);
+      } else if (len === "medium") {
+        // 7 sentences, single block
+        finalStory = takeSentences(story, 7);
+      } else {
+        // long: 10 sentences, 2 paragraphs
+        finalStory = twoParagraphsFromSentences(story, 10);
+      }
     }
 
     /* ============================================================
-       10. RETURN
+       11. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
