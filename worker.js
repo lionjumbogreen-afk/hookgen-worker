@@ -14,7 +14,7 @@ export default {
     const { topic, tone, mode, shortPro, length } = body;
 
     /* ============================================================
-       1. SECURE PRO CHECK (SERVER-SIDE ONLY)
+       1. SECURE PRO CHECK
     ============================================================ */
 
     const authHeader = request.headers.get("Authorization") || "";
@@ -38,7 +38,6 @@ export default {
         });
 
         const lsData = await lsRes.json();
-
         if (lsData.valid && lsData.license && lsData.license.status === "active") {
           isPro = true;
         }
@@ -50,44 +49,55 @@ export default {
     /* ============================================================
        2. TONE RULES
     ============================================================ */
+    function toneRules(t) {
+      if (t === "direct") return "Use a direct, punchy tone.";
+      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
+      if (t === "soft") return "Use a soft, emotional, reflective tone.";
+      if (t === "tiktok_narrator")
+        return "Write in the pacing and cadence of TikTok's narrator voice: short beats, clear pauses, clean emphasis.";
+      return "Use a cinematic, descriptive story tone.";
+    }
+
+    /* ============================================================
+       3. MODE RULES (FIXED)
+    ============================================================ */
     function modeRules(m, isLengthMode) {
-  if (m === "hook") {
-    return `
+      if (m === "hook") {
+        return `
 ONLY write the hook.
 1–2 sentences.
 No story.
-    `;
-  }
+        `;
+      }
 
-  if (m === "cta") {
-    return `
+      if (m === "cta") {
+        return `
 ONLY write the call‑to‑action.
 1–2 sentences.
 No story.
-    `;
-  }
+        `;
+      }
 
-  if (isLengthMode) {
-    return `
+      if (isLengthMode) {
+        return `
 Write a TikTok story in LINE FORMAT.
 Do NOT use paragraphs.
 Do NOT summarize.
 Do NOT output a hook.
-    `;
-  }
+        `;
+      }
 
-  return `
+      return `
 Write a full TikTok story script.
 Use natural paragraph breaks.
 Do NOT stop early.
 Do NOT summarize.
 Do NOT output a hook.
-  `;
-}
-
+      `;
+    }
 
     /* ============================================================
-       4. PRO VS FREE RULES (SERVER DECIDES)
+       4. PRO VS FREE RULES
     ============================================================ */
     let planRules = "";
 
@@ -130,15 +140,15 @@ You are HookGen, an AI that writes viral TikTok story scripts.
 TOPIC: ${topic}
 
 STARTING RULE:
-- If the user input is written like a hook (a sentence, a claim, a statement, a POV, a quote, a dramatic line), the story MUST begin with the exact text the user typed.
-- If the user input is a topic (a description, a request, or a subject), DO NOT start with it. Instead, create a strong hook inspired by it.
+- If the user input is written like a hook, the story MUST begin with the exact text the user typed.
+- If the user input is a topic, DO NOT start with it. Create a strong hook inspired by it.
 - Never rewrite a hook. Never ignore a topic.
 
 TONE:
 ${toneRules(tone)}
 
 MODE:
-${modeRules(mode)}
+${modeRules(mode, (!isPro && (length === "short" || length === "medium" || length === "long")))}
 
 LENGTH RULES:
 ${(!isPro && length === "short") ? `
@@ -211,7 +221,7 @@ MANDATORY RULES:
     const story = aiResponse.response || "";
 
     /* ============================================================
-       7. PARAGRAPH ENFORCEMENT (SERVER-SIDE)
+       7. PARAGRAPH ENFORCEMENT
     ============================================================ */
     function enforceParagraphCount(text, min, max) {
       let paragraphs = text
@@ -234,21 +244,17 @@ MANDATORY RULES:
     }
 
     /* ============================================================
-       8. APPLY PRO/FREE PARAGRAPH RULES
+       8. APPLY RULES
     ============================================================ */
     let finalStory;
 
-    // FREE USERS + LENGTH MODE → NO PARAGRAPH ENFORCEMENT
     if (!isPro && (length === "short" || length === "medium" || length === "long")) {
       finalStory = story;
     } else {
-      // PRO USERS → KEEP PARAGRAPH RULES
       if (isPro) {
-        if (shortPro) {
-          finalStory = enforceParagraphCount(story, 5, 5);
-        } else {
-          finalStory = enforceParagraphCount(story, 10, 10);
-        }
+        finalStory = shortPro
+          ? enforceParagraphCount(story, 5, 5)
+          : enforceParagraphCount(story, 10, 10);
       } else {
         finalStory = enforceParagraphCount(story, 4, 4);
       }
