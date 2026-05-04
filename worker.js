@@ -248,17 +248,27 @@ MANDATORY RULES:
     }
 
     /* ============================================================
-       8. APPLY RULES
-    ============================================================ */
-    let finalStory;
+   8. APPLY RULES
+============================================================ */
+let finalStory;
 
- if (!isPro && mode === "story" && (length === "short" || length === "medium" || length === "long")) {
+if (mode === "hook" || mode === "cta") {
+  // For hook/CTA, just return what the model gave
   finalStory = story;
-} else if (!isPro && mode !== "story") {
-  finalStory = story; // hook or cta, no paragraph enforcement
+} else if (!isPro && (length === "short" || length === "medium" || length === "long")) {
+  // Free + length mode → line-format story, no paragraph enforcement
+  finalStory = story;
 } else {
-  // existing paragraph enforcement logic
+  // Paragraph enforcement for story mode
+  if (isPro) {
+    finalStory = shortPro
+      ? enforceParagraphCount(story, 5, 5)
+      : enforceParagraphCount(story, 10, 10);
+  } else {
+    finalStory = enforceParagraphCount(story, 4, 4);
+  }
 }
+
 
 
     /* ============================================================
