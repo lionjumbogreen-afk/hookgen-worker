@@ -218,11 +218,11 @@ MANDATORY RULES:
     ============================================================ */
     let finalStory;
 
-    // If user selected length mode, DO NOT enforce paragraph count
-if (length === "short" || length === "medium" || length === "long") {
+// FREE USERS ONLY — length selector applies
+if (!isPro && (length === "short" || length === "medium" || length === "long")) {
   finalStory = story;
 } else {
-  // fallback to old system
+  // PRO USERS — keep paragraph rules
   if (isPro) {
     if (shortPro) {
       finalStory = enforceParagraphCount(story, 5, 5);
@@ -233,6 +233,7 @@ if (length === "short" || length === "medium" || length === "long") {
     finalStory = enforceParagraphCount(story, 4, 4);
   }
 }
+
 
 
     /* ============================================================
