@@ -252,17 +252,14 @@ MANDATORY RULES:
     ============================================================ */
     let finalStory;
 
-    if (!isPro && (length === "short" || length === "medium" || length === "long")) {
-      finalStory = story;
-    } else {
-      if (isPro) {
-        finalStory = shortPro
-          ? enforceParagraphCount(story, 5, 5)
-          : enforceParagraphCount(story, 10, 10);
-      } else {
-        finalStory = enforceParagraphCount(story, 4, 4);
-      }
-    }
+ if (!isPro && mode === "story" && (length === "short" || length === "medium" || length === "long")) {
+  finalStory = story;
+} else if (!isPro && mode !== "story") {
+  finalStory = story; // hook or cta, no paragraph enforcement
+} else {
+  // existing paragraph enforcement logic
+}
+
 
     /* ============================================================
        9. RETURN
