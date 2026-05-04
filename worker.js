@@ -203,12 +203,12 @@ MANDATORY OUTPUT RULES:
     ============================================================ */
 
     story = story
-      .replace(/\r/g, "")
-      .replace(/\s+/g, " ")
-      .replace(/([.!?])\s+/g, "$1\n")
-      .split("\n")
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+  .replace(/\r/g, "")
+  .replace(/\s+/g, " ")
+  .replace(/([.!?])\s+(?=[A-Z0-9])/g, "$1\n")
+  .split("\n")
+  .map(s => s.trim())
+  .filter(s => s.length > 0);
 
     /* ============================================================
        8. REMOVE DUPLICATES
