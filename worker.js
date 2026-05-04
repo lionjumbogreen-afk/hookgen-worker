@@ -256,10 +256,10 @@ MANDATORY OUTPUT RULES:
     }
 
     /* ============================================================
-       11. FINAL OUTPUT
-    ============================================================ */
+   11. FINAL OUTPUT (FIXED)
+============================================================ */
 
-   let finalStory;
+let finalStory;
 
 // HOOK MODE
 if (mode === "hook") {
@@ -267,34 +267,51 @@ if (mode === "hook") {
 
 // CINEMATIC ALWAYS WINS (free or pro)
 } else if (format === "cinematic") {
+  // Pro Gen cinematic = 4 paragraphs
+  // Free Mode cinematic = also 4 paragraphs
   finalStory = enforceParagraphs(story, 4);
 
-// PRO GEN (same lengths as free, but more polished)
+// PRO GEN
 } else if (isPro && proGen) {
+
+  // LINE MODE (12–20 full sentences, each on its own line)
   if (format === "line") {
     finalStory = enforceLines(story, 20);
+
+  // PRO GEN SHORT (5 full sentences)
   } else if (format === "short") {
     finalStory = takeSentences(story, 5);
+
+  // PRO GEN MEDIUM (7 full sentences)
   } else if (format === "medium") {
     finalStory = takeSentences(story, 7);
+
+  // PRO GEN LONG (10 full sentences, 2 paragraphs)
   } else if (format === "long") {
     finalStory = twoParagraphs(story, 10);
+
+  // DEFAULT PRO GEN (12–20 lines)
   } else {
-    finalStory = takeSentences(story, 7);
+    finalStory = enforceLines(story, 20);
   }
 
 // FREE MODE
 } else {
+
   if (format === "short") {
     finalStory = takeSentences(story, 5);
+
   } else if (format === "medium") {
     finalStory = takeSentences(story, 7);
-  } else {
+
+  } else if (format === "long") {
     finalStory = twoParagraphs(story, 10);
+
+  } else {
+    // fallback for free mode
+    finalStory = takeSentences(story, 7);
   }
 }
-
-
 
     /* ============================================================
        12. RETURN
