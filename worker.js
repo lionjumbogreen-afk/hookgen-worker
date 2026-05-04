@@ -2,31 +2,30 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    /* ============================================================
-       RAW BODY READER (fixes signature verification)
-    ============================================================ */
+    // ============================================================
+    // RAW BODY READER (CRITICAL FIX)
+    // ============================================================
     async function readRawBody(req) {
       const reader = req.body.getReader();
       const chunks = [];
-      let done, value;
-
       while (true) {
-        ({ done, value } = await reader.read());
+        const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
       }
-
-      return new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0))
-        .map((_, i) => chunks.reduce((sum, chunk) => {
-          if (i < chunk.length) return chunk[i];
-          i -= chunk.length;
-          return sum;
-        }, 0));
+      let length = chunks.reduce((a, c) => a + c.length, 0);
+      let merged = new Uint8Array(length);
+      let offset = 0;
+      for (let chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return merged;
     }
 
-    /* ============================================================
-       WEBHOOK HANDLER
-    ============================================================ */
+    // ============================================================
+    // WEBHOOK HANDLER
+    // ============================================================
     if (url.pathname === "/webhook") {
       const cors = {
         "Access-Control-Allow-Origin": "*",
@@ -38,7 +37,7 @@ export default {
         return new Response(null, { headers: cors });
       }
 
-      // Read raw body (CRITICAL FIX)
+      // READ RAW BODY (THIS FIXES YOUR 500 ERROR)
       const rawBody = await readRawBody(request);
       const bodyText = new TextDecoder().decode(rawBody);
 
@@ -106,10 +105,9 @@ export default {
       return new Response("OK", { status: 200, headers: cors });
     }
 
-    /* ============================================================
-       LICENSE VALIDATION + 3 DEVICE ACTIVATION
-    ============================================================ */
-
+    // ============================================================
+    // ACTIVATION ENDPOINT (3 DEVICES)
+    // ============================================================
     if (url.pathname === "/activate") {
       const cors = {
         "Access-Control-Allow-Origin": "*",
@@ -148,7 +146,6 @@ export default {
         }), { headers: cors });
       }
 
-      // Check existing activations
       const activations = record.activations || [];
 
       // Already activated on this device
@@ -187,10 +184,6 @@ export default {
         devicesAllowed: 3
       }), { headers: cors });
     }
-
-    /* ============================================================
-       YOUR STORY GENERATOR ROUTE (unchanged)
-    ============================================================ */
 
     return new Response("Worker online");
   }
