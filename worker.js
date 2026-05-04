@@ -97,7 +97,7 @@ Do NOT output a hook unless the user typed one.
 PRO GEN — LINE MODE:
 - Write 12–20 lines.
 - 1 short sentence per line.
-- High‑impact pacing.
+- FORCE a line break after every sentence.
 - No paragraphs.
 - No emojis.
 - No hashtags.
@@ -120,6 +120,7 @@ PRO GEN — CINEMATIC MODE:
 FREE MODE:
 - 6–10 lines.
 - 1 short sentence per line.
+- FORCE a line break after every sentence.
 - No paragraphs.
 - No emojis.
 - No hashtags.
@@ -158,6 +159,9 @@ MANDATORY OUTPUT RULES:
 - NO titles.
 - NO section headers.
 - Follow the format EXACTLY.
+- NEVER repeat the same sentence twice.
+- NEVER repeat the same paragraph twice.
+- NEVER loop or restate the same idea.
     `.trim();
 
     /* ============================================================
@@ -176,7 +180,28 @@ MANDATORY OUTPUT RULES:
     let story = aiResponse.response || "";
 
     /* ============================================================
-       7. FORMAT ENFORCEMENT
+       7. CLEANING: REMOVE DUPLICATES
+    ============================================================ */
+
+    function removeRepeats(text) {
+      const lines = text.split("\n").map(l => l.trim());
+      const seen = new Set();
+      const cleaned = [];
+
+      for (const line of lines) {
+        if (!seen.has(line)) {
+          cleaned.push(line);
+          seen.add(line);
+        }
+      }
+
+      return cleaned.join("\n");
+    }
+
+    story = removeRepeats(story);
+
+    /* ============================================================
+       8. FORMAT ENFORCEMENT
     ============================================================ */
 
     function enforceLines(text, min, max) {
@@ -227,11 +252,10 @@ MANDATORY OUTPUT RULES:
     }
 
     /* ============================================================
-       8. RETURN
+       9. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
   }
 };
-
