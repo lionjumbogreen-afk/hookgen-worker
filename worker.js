@@ -148,7 +148,11 @@ TONE:
 ${toneRules(tone)}
 
 MODE:
-${modeRules(mode, (!isPro && (length === "short" || length === "medium" || length === "long")))}
+${mode === "story"
+    ? modeRules(mode, (!isPro && (length === "short" || length === "medium" || length === "long")))
+    : modeRules(mode, false)
+}
+
 
 LENGTH RULES:
 ${(!isPro && length === "short") ? `
