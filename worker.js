@@ -11,12 +11,11 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, shortPro, length } = body;
+    const { topic, tone, mode, proGen, format } = body;
 
     /* ============================================================
        1. SECURE PRO CHECK
     ============================================================ */
-
     const authHeader = request.headers.get("Authorization") || "";
     const licenseKey = authHeader.replace("Bearer ", "").trim();
 
@@ -59,9 +58,9 @@ export default {
     }
 
     /* ============================================================
-       3. MODE RULES (FIXED)
+       3. MODE RULES
     ============================================================ */
-    function modeRules(m, isLengthMode) {
+    function modeRules(m) {
       if (m === "hook") {
         return `
 ONLY write the hook.
@@ -78,63 +77,60 @@ No story.
         `;
       }
 
-      if (isLengthMode) {
-        return `
-Write a TikTok story in LINE FORMAT.
-Do NOT use paragraphs.
-Do NOT summarize.
-Do NOT output a hook.
-        `;
-      }
-
       return `
 Write a full TikTok story script.
-Use natural paragraph breaks.
 Do NOT stop early.
 Do NOT summarize.
-Do NOT output a hook.
+Do NOT output a hook unless the user typed one.
       `;
     }
 
     /* ============================================================
-       4. PRO VS FREE RULES
+       4. PRO GEN RULES
     ============================================================ */
-    let planRules = "";
 
-    if (isPro) {
-      if (shortPro) {
-        planRules = `
-PRO USER RULES (SHORT MODE):
-- EXACTLY 5 paragraphs.
-- 200–300 words.
-- Cinematic pacing.
-- No early stopping.
+    let generationRules = "";
+
+    if (isPro && proGen) {
+      if (format === "line") {
+        generationRules = `
+PRO GEN — LINE MODE:
+- Write 12–20 lines.
+- 1 short sentence per line.
+- High‑impact pacing.
+- No paragraphs.
+- No emojis.
+- No hashtags.
+- No markdown.
         `;
-      } else {
-        planRules = `
-PRO USER RULES:
-- EXACTLY 10 paragraphs.
-- 400–550 words.
-- Rich sensory detail.
+      } else if (format === "cinematic") {
+        generationRules = `
+PRO GEN — CINEMATIC MODE:
+- EXACTLY 4 paragraphs.
 - Cinematic pacing.
-- No early stopping.
+- Rich sensory detail.
+- No emojis.
+- No hashtags.
+- No markdown.
         `;
       }
     } else {
-      planRules = `
-FREE USER RULES:
-- EXACTLY 4 paragraphs (ONLY when length mode is NOT used).
-- 150–200 words.
-- Tight pacing.
+      // FREE MODE
+      generationRules = `
+FREE MODE:
+- 6–10 lines.
+- 1 short sentence per line.
+- No paragraphs.
+- No emojis.
+- No hashtags.
+- No markdown.
       `;
     }
 
     /* ============================================================
-       5. FINAL SYSTEM PROMPT
+       5. SYSTEM PROMPT
     ============================================================ */
     const systemPrompt = `
-${planRules}
-
 You are HookGen, an AI that writes viral TikTok story scripts.
 
 TOPIC: ${topic}
@@ -142,46 +138,17 @@ TOPIC: ${topic}
 STARTING RULE:
 - If the user input is written like a hook, the story MUST begin with the exact text the user typed.
 - If the user input is a topic, DO NOT start with it. Create a strong hook inspired by it.
-- Never rewrite a hook. Never ignore a topic.
 
 TONE:
 ${toneRules(tone)}
 
 MODE:
-${mode === "story"
-    ? modeRules(mode, (!isPro && (length === "short" || length === "medium" || length === "long")))
-    : modeRules(mode, false)
-}
+${modeRules(mode)}
 
+GENERATION RULES:
+${generationRules}
 
-LENGTH RULES:
-${(!isPro && length === "short") ? `
-SHORT MODE:
-- 4 to 6 lines total.
-- 1 short sentence per line.
-- Fast pacing.
-- Immediate hook.
-- No long paragraphs.
-- End with a cliffhanger.
-` : (!isPro && length === "medium") ? `
-MEDIUM MODE:
-- 8 to 12 lines total.
-- Slightly more detail.
-- One twist.
-- No paragraphs longer than 2 sentences.
-` : (!isPro && length === "long") ? `
-LONG MODE:
-- 15 to 40 lines.
-- Full story structure.
-- Atmosphere + buildup.
-- Multiple beats.
-- One major twist.
-` : `
-(No length mode active — paragraph rules apply.)
-`}
-
-${(!isPro && (length === "short" || length === "medium" || length === "long")) ? `
-MANDATORY RULES:
+MANDATORY OUTPUT RULES:
 - Output ONLY the story text.
 - NO emojis.
 - NO hashtags.
@@ -190,27 +157,11 @@ MANDATORY RULES:
 - NO disclaimers.
 - NO titles.
 - NO section headers.
-- Use natural LINE BREAKS.
-- Follow the LENGTH RULES exactly.
-` : `
-MANDATORY RULES:
-- Output ONLY the story text.
-- NO emojis.
-- NO hashtags.
-- NO markdown.
-- NO filler.
-- NO disclaimers.
-- NO titles.
-- NO section headers.
-- Use natural paragraph spacing.
-- Follow the paragraph count EXACTLY.
-- Follow the word count EXACTLY.
-- If the model tries to end early, CONTINUE writing until the target range is met.
-`}
+- Follow the format EXACTLY.
     `.trim();
 
     /* ============================================================
-       6. CALL THE MODEL
+       6. CALL MODEL
     ============================================================ */
     const model = "@cf/meta/llama-3-8b-instruct";
 
@@ -222,57 +173,61 @@ MANDATORY RULES:
       max_tokens: 2000
     });
 
-    const story = aiResponse.response || "";
+    let story = aiResponse.response || "";
 
     /* ============================================================
-       7. PARAGRAPH ENFORCEMENT
+       7. FORMAT ENFORCEMENT
     ============================================================ */
-    function enforceParagraphCount(text, min, max) {
+
+    function enforceLines(text, min, max) {
+      let lines = text
+        .split(/\n+/)
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+      if (lines.length > max) lines = lines.slice(0, max);
+
+      while (lines.length < min) {
+        lines.push(lines[lines.length - 1] || "");
+      }
+
+      return lines.join("\n");
+    }
+
+    function enforceParagraphs(text, count) {
       let paragraphs = text
         .split(/\n+/)
         .map(p => p.trim())
         .filter(p => p.length > 0);
 
-      if (paragraphs.length > max) {
-        paragraphs = paragraphs.slice(0, max);
+      if (paragraphs.length > count) {
+        paragraphs = paragraphs.slice(0, count);
       }
 
-      while (paragraphs.length < min) {
-        const last = paragraphs.pop() || "";
-        const secondLast = paragraphs.pop() || "";
-        const merged = (secondLast + " " + last).trim();
-        paragraphs.push(merged);
+      while (paragraphs.length < count) {
+        paragraphs.push(paragraphs[paragraphs.length - 1] || "");
       }
 
       return paragraphs.join("\n\n");
     }
 
-   /* ============================================================
-   8. APPLY RULES
-============================================================ */
-let finalStory;
+    let finalStory = story;
 
-if (mode === "hook" || mode === "cta") {
-  // Hook or CTA → return raw model output
-  finalStory = story;
-} else if (!isPro && (length === "short" || length === "medium" || length === "long")) {
-  // Free + length mode → line-format story
-  finalStory = story;
-} else {
-  // Paragraph enforcement for story mode
-  if (isPro) {
-    finalStory = shortPro
-      ? enforceParagraphCount(story, 5, 5)
-      : enforceParagraphCount(story, 10, 10);
-  } else {
-    finalStory = enforceParagraphCount(story, 4, 4);
-  }
-}
-
-
+    if (mode === "hook" || mode === "cta") {
+      // leave raw
+    } else if (isPro && proGen) {
+      if (format === "line") {
+        finalStory = enforceLines(story, 12, 20);
+      } else if (format === "cinematic") {
+        finalStory = enforceParagraphs(story, 4);
+      }
+    } else {
+      // FREE MODE
+      finalStory = enforceLines(story, 6, 10);
+    }
 
     /* ============================================================
-       9. RETURN
+       8. RETURN
     ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
