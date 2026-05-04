@@ -1,5 +1,72 @@
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    /* ============================================================
+       WEBHOOK HANDLER (NEW)
+    ============================================================ */
+    if (url.pathname === "/webhook") {
+      const cors = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type, X-Signature",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      };
+
+      if (request.method === "OPTIONS") {
+        return new Response(null, { headers: cors });
+      }
+
+      let bodyText = await request.text();
+      let signature = request.headers.get("X-Signature") || "";
+
+      // Basic signature check
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode(env.LEMON_SECRET || "");
+      const sigData = encoder.encode(bodyText);
+
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        keyData,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["verify"]
+      );
+
+      const isValid = await crypto.subtle.verify(
+        "HMAC",
+        cryptoKey,
+        Uint8Array.from(atob(signature), c => c.charCodeAt(0)),
+        sigData
+      ).catch(() => false);
+
+      if (!isValid) {
+        return new Response("Invalid signature", { status: 401, headers: cors });
+      }
+
+      // Parse webhook JSON
+      let data;
+      try {
+        data = JSON.parse(bodyText);
+      } catch {
+        return new Response("Bad JSON", { status: 400, headers: cors });
+      }
+
+      // Extract license info
+      const event = data?.meta?.event_name || "";
+      const licenseKey = data?.data?.attributes?.key || "";
+      const status = data?.data?.attributes?.status || "";
+
+      if (licenseKey) {
+        await env.LICENSES.put(licenseKey, status);
+      }
+
+      return new Response("OK", { status: 200, headers: cors });
+    }
+
+    /* ============================================================
+       STORY GENERATOR (YOUR ORIGINAL CODE)
+    ============================================================ */
+
     const cors = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -13,9 +80,6 @@ export default {
     const body = await request.json();
     const { topic, tone, mode, proGen, format } = body;
 
-    /* ============================================================
-       HOOK DETECTION
-    ============================================================ */
     function looksLikeHook(text) {
       return (
         text.length < 180 &&
@@ -26,9 +90,6 @@ export default {
       );
     }
 
-    /* ============================================================
-       PRO LICENSE CHECK
-    ============================================================ */
     const authHeader = request.headers.get("Authorization") || "";
     const licenseKey = authHeader.replace("Bearer ", "").trim();
     let isPro = false;
@@ -57,9 +118,6 @@ export default {
       }
     }
 
-    /* ============================================================
-       TONE RULES
-    ============================================================ */
     function toneRules(t) {
       if (t === "direct") return "Use a direct, punchy tone.";
       if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
@@ -69,9 +127,6 @@ export default {
       return "Use a cinematic, descriptive story tone.";
     }
 
-    /* ============================================================
-       MODE RULES
-    ============================================================ */
     function modeRules(m) {
       if (m === "hook") {
         return `
@@ -93,10 +148,6 @@ Do NOT explain.
       `;
     }
 
-    /* ============================================================
-       GENERATION RULES (FREE + PRO)
-    ============================================================ */
-
     let generationRules = "";
 
     if (isPro && proGen) {
@@ -105,27 +156,19 @@ Do NOT explain.
 PRO GEN — LINE MODE:
 - Write 12–20 lines.
 - Each line must be a full sentence between 12 and 17 words.
-- No micro-sentences or fragments.
-- No dramatic one-word beats.
 - FORCE a line break after every sentence.
-- No paragraphs.
         `;
       } else if (format === "cinematic") {
         generationRules = `
 PRO GEN — CINEMATIC MODE:
 - EXACTLY 4 paragraphs.
 - Each paragraph must contain full sentences between 12 and 17 words.
-- No micro-sentences or fragments.
-- No dramatic one-word beats.
-- Cinematic pacing with rich sensory detail.
         `;
       } else {
         generationRules = `
 PRO GEN — DEFAULT:
 - Write 12–20 lines.
 - Each line must be a full sentence between 12 and 17 words.
-- No micro-sentences or fragments.
-- No dramatic one-word beats.
         `;
       }
     } else {
@@ -134,45 +177,11 @@ FREE MODE:
 - "short": 5 full sentences.
 - "medium": 7 full sentences.
 - "long": 10 full sentences split into 2 paragraphs.
-- Every sentence must be between 12 and 17 words.
-- No micro-sentences or fragments.
-- No dramatic one-word beats.
-- Every sentence must read like a natural TikTok narrator line.
       `;
     }
 
-    /* ============================================================
-       SYSTEM PROMPT (FINAL VERSION)
-    ============================================================ */
     const systemPrompt = `
 You are an AI that writes TikTok-style narrator stories with strict structural and sentence rules.
-
-MANDATORY OUTPUT RULES:
-- Output ONLY the story text.
-- NO emojis.
-- NO hashtags.
-- NO markdown.
-- NEVER repeat the same sentence.
-- NEVER loop.
-- NEVER write introductions like "Here's a script", "Here's your TikTok story", or anything similar.
-- Start immediately with the story or the hook.
-- ALWAYS follow the exact structure defined in GENERATION RULES.
-- NEVER explain what you are doing.
-- NEVER apologize.
-- NEVER break character as a TikTok story narrator.
-
-### SENTENCE RULES (STRICT)
-- Every sentence must be between 12 and 17 words.
-- Each sentence must be a complete idea.
-- End every sentence with a period.
-- Use NO MORE than one comma per sentence.
-- Do NOT chain multiple ideas together with commas.
-- Do NOT write run-on sentences.
-- Do NOT write sentence fragments.
-- Do NOT split a single idea into multiple short sentences.
-- Do NOT write one-word or two-word sentences.
-- Do NOT write dramatic beats like "Five." or "Years." or "Silence."
-- Every sentence must read like a natural spoken TikTok narrator line.
 
 ### TONE RULES
 ${toneRules(tone)}
@@ -184,9 +193,6 @@ ${modeRules(mode)}
 ${generationRules}
 `;
 
-    /* ============================================================
-       RUN MODEL
-    ============================================================ */
     const model = "@cf/meta/llama-3-8b-instruct";
 
     const aiResponse = await env.AI.run(model, {
@@ -199,9 +205,6 @@ ${generationRules}
 
     let story = aiResponse.response || "";
 
-    /* ============================================================
-       CLEAN + SPLIT SENTENCES
-    ============================================================ */
     story = story
       .replace(/\r/g, "")
       .replace(/\s+/g, " ")
@@ -210,9 +213,6 @@ ${generationRules}
       .map(s => s.trim())
       .filter(s => s.length > 0);
 
-    /* ============================================================
-       REMOVE DUPLICATES
-    ============================================================ */
     const seen = new Set();
     story = story.filter(line => {
       if (seen.has(line)) return false;
@@ -220,16 +220,10 @@ ${generationRules}
       return true;
     });
 
-    /* ============================================================
-       FORCE HOOK FIRST
-    ============================================================ */
     if (mode !== "hook" && looksLikeHook(topic)) {
       story.unshift(topic);
     }
 
-    /* ============================================================
-       FORMAT HELPERS
-    ============================================================ */
     function takeSentences(lines, count) {
       return lines.slice(0, count).join(" ");
     }
@@ -254,9 +248,6 @@ ${generationRules}
       return out.join("\n\n");
     }
 
-    /* ============================================================
-       FINAL OUTPUT
-    ============================================================ */
     let finalStory;
 
     if (mode === "hook") {
@@ -287,9 +278,6 @@ ${generationRules}
       }
     }
 
-    /* ============================================================
-       RETURN
-    ============================================================ */
     return new Response(JSON.stringify({ story: finalStory, isPro }), {
       headers: { "Content-Type": "application/json", ...cors }
     });
