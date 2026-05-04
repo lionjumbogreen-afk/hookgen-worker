@@ -115,7 +115,7 @@ PRO USER RULES:
     } else {
       planRules = `
 FREE USER RULES:
-- EXACTLY 4 paragraphs.
+- EXACTLY 4 paragraphs (ONLY when length mode is NOT used).
 - 150–200 words.
 - Tight pacing.
       `;
@@ -131,41 +131,62 @@ You are HookGen, an AI that writes viral TikTok story scripts.
 
 TOPIC: ${topic}
 
+STARTING RULE:
+- If the user input is written like a hook (a sentence, a claim, a statement, a POV, a quote, a dramatic line), the story MUST begin with the exact text the user typed.
+- If the user input is a topic (a description, a request, or a subject), DO NOT start with it. Instead, create a strong hook inspired by it.
+- Never rewrite a hook. Never ignore a topic.
+
 TONE:
 ${toneRules(tone)}
 
 MODE:
 ${modeRules(mode)}
+
 LENGTH RULES:
-${length === "short" ? `
+${(!isPro && length === "short") ? `
 SHORT MODE:
-- 4 to 6 lines total
-- 1 short sentence per line
-- Fast pacing
-- Immediate hook
-- No long paragraphs
-- End with a cliffhanger
-` : length === "medium" ? `
+- 4 to 6 lines total.
+- 1 short sentence per line.
+- Fast pacing.
+- Immediate hook.
+- No long paragraphs.
+- End with a cliffhanger.
+` : (!isPro && length === "medium") ? `
 MEDIUM MODE:
-- 8 to 12 lines total
-- Slightly more detail
-- One twist
-- No paragraphs longer than 2 sentences
-` : `
+- 8 to 12 lines total.
+- Slightly more detail.
+- One twist.
+- No paragraphs longer than 2 sentences.
+` : (!isPro && length === "long") ? `
 LONG MODE:
-- 15 to 40 lines
-- Full story structure
-- Atmosphere + buildup
-- Multiple beats
-- One major twist
+- 15 to 40 lines.
+- Full story structure.
+- Atmosphere + buildup.
+- Multiple beats.
+- One major twist.
+` : `
+(No length mode active — paragraph rules apply.)
 `}
 
+${(!isPro && (length === "short" || length === "medium" || length === "long")) ? `
 MANDATORY RULES:
 - Output ONLY the story text.
 - NO emojis.
 - NO hashtags.
 - NO markdown.
-- NO filler like "Here is your story".
+- NO filler.
+- NO disclaimers.
+- NO titles.
+- NO section headers.
+- Use natural LINE BREAKS.
+- Follow the LENGTH RULES exactly.
+` : `
+MANDATORY RULES:
+- Output ONLY the story text.
+- NO emojis.
+- NO hashtags.
+- NO markdown.
+- NO filler.
 - NO disclaimers.
 - NO titles.
 - NO section headers.
@@ -173,6 +194,7 @@ MANDATORY RULES:
 - Follow the paragraph count EXACTLY.
 - Follow the word count EXACTLY.
 - If the model tries to end early, CONTINUE writing until the target range is met.
+`}
     `.trim();
 
     /* ============================================================
@@ -218,23 +240,21 @@ MANDATORY RULES:
     ============================================================ */
     let finalStory;
 
-// FREE USERS ONLY — length selector applies
-if (!isPro && (length === "short" || length === "medium" || length === "long")) {
-  finalStory = story;
-} else {
-  // PRO USERS — keep paragraph rules
-  if (isPro) {
-    if (shortPro) {
-      finalStory = enforceParagraphCount(story, 5, 5);
+    // FREE USERS + LENGTH MODE → NO PARAGRAPH ENFORCEMENT
+    if (!isPro && (length === "short" || length === "medium" || length === "long")) {
+      finalStory = story;
     } else {
-      finalStory = enforceParagraphCount(story, 10, 10);
+      // PRO USERS → KEEP PARAGRAPH RULES
+      if (isPro) {
+        if (shortPro) {
+          finalStory = enforceParagraphCount(story, 5, 5);
+        } else {
+          finalStory = enforceParagraphCount(story, 10, 10);
+        }
+      } else {
+        finalStory = enforceParagraphCount(story, 4, 4);
+      }
     }
-  } else {
-    finalStory = enforceParagraphCount(story, 4, 4);
-  }
-}
-
-
 
     /* ============================================================
        9. RETURN
@@ -244,4 +264,3 @@ if (!isPro && (length === "short" || length === "medium" || length === "long")) 
     });
   }
 };
-
