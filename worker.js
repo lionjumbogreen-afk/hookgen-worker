@@ -97,36 +97,50 @@ Do NOT output a hook unless the user typed one.
 
     let generationRules = "";
 
-    if (isPro && proGen) {
-      if (format === "line") {
-        generationRules = `
+if (isPro && proGen) {
+  if (format === "line") {
+    generationRules = `
 PRO GEN — LINE MODE:
 - Write 12–20 lines.
-- 1 short sentence per line.
+- Each line must be a full sentence between 12 and 20 words.
+- No micro-sentences or fragments.
+- No dramatic one-word beats.
+- Every line must read like a natural TikTok narrator sentence.
 - FORCE a line break after every sentence.
 - No paragraphs.
-        `;
-      } else if (format === "cinematic") {
-        generationRules = `
+    `;
+  } else if (format === "cinematic") {
+    generationRules = `
 PRO GEN — CINEMATIC MODE:
 - EXACTLY 4 paragraphs.
-- Cinematic pacing.
-- Rich sensory detail.
-        `;
-      } else {
-        generationRules = `
+- Each paragraph must contain full sentences between 12 and 20 words.
+- No micro-sentences or fragments.
+- No dramatic one-word beats.
+- Cinematic pacing with rich sensory detail.
+- Every sentence must read like a natural TikTok narrator line.
+    `;
+  } else {
+    generationRules = `
 PRO GEN — DEFAULT:
-- 12–20 lines.
-        `;
-      }
-    } else {
-      generationRules = `
+- Write 12–20 lines.
+- Each line must be a full sentence between 12 and 20 words.
+- No micro-sentences or fragments.
+- No dramatic one-word beats.
+- Every line must read like a natural TikTok narrator sentence.
+    `;
+  }
+} else {
+  generationRules = `
 FREE MODE:
-- "short": ~5 sentences.
-- "medium": ~7 sentences.
-- "long": ~10 sentences, split into 2 paragraphs.
-      `;
-    }
+- "short": 5 full sentences.
+- "medium": 7 full sentences.
+- "long": 10 full sentences split into 2 paragraphs.
+- Every sentence must be between 12 and 20 words.
+- No micro-sentences or fragments.
+- No dramatic one-word beats.
+- Every sentence must read like a natural TikTok narrator line.
+  `;
+}
 
     /* ============================================================
        5. SYSTEM PROMPT
