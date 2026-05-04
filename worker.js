@@ -154,6 +154,10 @@ MANDATORY OUTPUT RULES:
 - NEVER loop.
 - NEVER write introductions like "Here's a script", "Here's your TikTok story", or anything similar.
 - Start immediately with the story or the hook.
+- ALWAYS follow the exact structure defined in GENERATION RULES.
+- NEVER explain what you are doing.
+- NEVER apologize.
+- NEVER break character as a TikTok story narrator.
     `.trim();
 
     /* ============================================================
@@ -232,25 +236,42 @@ MANDATORY OUTPUT RULES:
        11. FINAL OUTPUT
     ============================================================ */
 
-    let finalStory;
+   let finalStory;
 
-    if (mode === "hook") {
-      finalStory = story.slice(0, 2).join(" ");
-    } else if (isPro && proGen) {
-      if (format === "cinematic") {
-        finalStory = enforceParagraphs(story, 4);
-      } else {
-        finalStory = enforceLines(story, 20);
-      }
-    } else {
-      if (format === "short") {
-        finalStory = takeSentences(story, 5);
-      } else if (format === "medium") {
-        finalStory = takeSentences(story, 7);
-      } else {
-        finalStory = twoParagraphs(story, 10);
-      }
-    }
+if (mode === "hook") {
+  // Hook mode: always 1–2 sentences
+  finalStory = story.slice(0, 2).join(" ");
+
+} else if (format === "cinematic") {
+  // CINEMATIC ALWAYS WINS — free or pro
+  finalStory = enforceParagraphs(story, 4);
+
+} else if (isPro && proGen) {
+  // PRO GEN — same lengths as free, but more polished
+  if (format === "line") {
+    finalStory = enforceLines(story, 20);
+  } else if (format === "short") {
+    finalStory = takeSentences(story, 5);
+  } else if (format === "medium") {
+    finalStory = takeSentences(story, 7);
+  } else if (format === "long") {
+    finalStory = twoParagraphs(story, 10);
+  } else {
+    // fallback for weird formats
+    finalStory = takeSentences(story, 7);
+  }
+
+} else {
+  // FREE MODE
+  if (format === "short") {
+    finalStory = takeSentences(story, 5);
+  } else if (format === "medium") {
+    finalStory = takeSentences(story, 7);
+  } else {
+    finalStory = twoParagraphs(story, 10);
+  }
+}
+
 
     /* ============================================================
        12. RETURN
