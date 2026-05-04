@@ -11,7 +11,7 @@ export default {
     }
 
     const body = await request.json();
-    const { topic, tone, mode, shortPro } = body; // NEW FLAG
+    const { topic, tone, mode, shortPro, length } = body;
 
     /* ============================================================
        1. SECURE PRO CHECK (SERVER-SIDE ONLY)
@@ -136,6 +136,29 @@ ${toneRules(tone)}
 
 MODE:
 ${modeRules(mode)}
+LENGTH RULES:
+${length === "short" ? `
+SHORT MODE:
+- 4 to 6 lines total
+- 1 short sentence per line
+- Fast pacing
+- Immediate hook
+- No long paragraphs
+- End with a cliffhanger
+` : length === "medium" ? `
+MEDIUM MODE:
+- 8 to 12 lines total
+- Slightly more detail
+- One twist
+- No paragraphs longer than 2 sentences
+` : `
+LONG MODE:
+- 15 to 40 lines
+- Full story structure
+- Atmosphere + buildup
+- Multiple beats
+- One major twist
+`}
 
 MANDATORY RULES:
 - Output ONLY the story text.
@@ -195,15 +218,22 @@ MANDATORY RULES:
     ============================================================ */
     let finalStory;
 
-    if (isPro) {
-      if (shortPro) {
-        finalStory = enforceParagraphCount(story, 5, 5);
-      } else {
-        finalStory = enforceParagraphCount(story, 10, 10);
-      }
+    // If user selected length mode, DO NOT enforce paragraph count
+if (length === "short" || length === "medium" || length === "long") {
+  finalStory = story;
+} else {
+  // fallback to old system
+  if (isPro) {
+    if (shortPro) {
+      finalStory = enforceParagraphCount(story, 5, 5);
     } else {
-      finalStory = enforceParagraphCount(story, 4, 4);
+      finalStory = enforceParagraphCount(story, 10, 10);
     }
+  } else {
+    finalStory = enforceParagraphCount(story, 4, 4);
+  }
+}
+
 
     /* ============================================================
        9. RETURN
