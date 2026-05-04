@@ -16,12 +16,16 @@ export default {
     /* ============================================================
        HOOK DETECTION (for story mode)
     ============================================================ */
-    function looksLikeHook(text) {
-      return (
-        text.length < 140 &&
-        /you|your|here|this|that|stop|wait|listen|mistake|secret|one thing/i.test(text)
-      );
-    }
+   function looksLikeHook(text) {
+  return (
+    text.length < 180 &&
+    (
+      /you|your|i|my|mom|dad|call|keeps|secret|mistake|truth|nobody|no one|here|this|that/i.test(text) ||
+      /^[^.!?]{5,160}$/.test(text)
+    )
+  );
+}
+
 
     /* ============================================================
        1. SECURE PRO CHECK
