@@ -4,3 +4,7 @@ compatibility_date = "2024-04-01"
 
 [ai]
 binding = "AI"
+
+kv_namespaces = [
+  { binding = "LICENSES", id = "e7ce89591c214430a55480355cf13a82" }
+]
