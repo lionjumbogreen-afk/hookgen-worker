@@ -50,43 +50,41 @@ export default {
     /* ============================================================
        2. TONE RULES
     ============================================================ */
-    function toneRules(t) {
-      if (t === "direct") return "Use a direct, punchy tone.";
-      if (t === "hype") return "Use a hype, dramatic, high‑energy tone.";
-      if (t === "soft") return "Use a soft, emotional, reflective tone.";
-      if (t === "tiktok_narrator")
-        return "Write in the pacing and cadence of TikTok's narrator voice: short beats, clear pauses, clean emphasis.";
-      return "Use a cinematic, descriptive story tone.";
-    }
-
-    /* ============================================================
-       3. MODE RULES
-    ============================================================ */
-    function modeRules(m) {
-      if (m === "hook") {
-        return `
+    function modeRules(m, isLengthMode) {
+  if (m === "hook") {
+    return `
 ONLY write the hook.
 1–2 sentences.
 No story.
-        `;
-      }
+    `;
+  }
 
-      if (m === "cta") {
-        return `
+  if (m === "cta") {
+    return `
 ONLY write the call‑to‑action.
 1–2 sentences.
 No story.
-        `;
-      }
+    `;
+  }
 
-      return `
+  if (isLengthMode) {
+    return `
+Write a TikTok story in LINE FORMAT.
+Do NOT use paragraphs.
+Do NOT summarize.
+Do NOT output a hook.
+    `;
+  }
+
+  return `
 Write a full TikTok story script.
 Use natural paragraph breaks.
 Do NOT stop early.
 Do NOT summarize.
 Do NOT output a hook.
-      `;
-    }
+  `;
+}
+
 
     /* ============================================================
        4. PRO VS FREE RULES (SERVER DECIDES)
