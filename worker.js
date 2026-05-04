@@ -161,6 +161,10 @@ MANDATORY OUTPUT RULES:
 - Each sentence must be a full sentence of at least 12 words.
 - Do NOT write one-word or two-word sentences.
 - Do NOT break a single idea into multiple micro-sentences.
+- Each sentence must be between 12 and 20 words.
+- Do NOT write sentence fragments.
+- Do NOT split a single idea into multiple short sentences.
+- Every sentence must read like a natural spoken TikTok narrator line.
     `.trim();
 
     /* ============================================================
