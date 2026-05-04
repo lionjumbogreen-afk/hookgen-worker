@@ -75,21 +75,26 @@ export default {
        3. MODE RULES
     ============================================================ */
     function modeRules(m) {
-      if (m === "hook") {
-        return `
+  if (m === "hook") {
+    return `
 ONLY write the hook.
 1–2 sentences.
 No story.
-        `;
-      }
+No introductions.
+Start immediately with the hook.
+    `;
+  }
 
-      return `
-Write a full TikTok story script.
-Do NOT stop early.
+  return `
+Write a full TikTok story.
+Do NOT introduce the story.
+Do NOT say "here's your script" or anything similar.
+Start immediately with the first sentence of the story.
 Do NOT summarize.
-Do NOT output a hook unless the user typed one.
-      `;
-    }
+Do NOT explain.
+    `;
+}
+
 
     /* ============================================================
        4. PRO GEN / FREE RULES
