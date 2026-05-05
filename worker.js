@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
 
     // ============================================================
-    // RAW BODY READER (CRITICAL FIX)
+    // RAW BODY READER
     // ============================================================
     async function readRawBody(req) {
       const reader = req.body.getReader();
@@ -37,26 +37,17 @@ export default {
         return new Response(null, { headers: cors });
       }
 
-      // READ RAW BODY (THIS FIXES YOUR 500 ERROR)
       const rawBody = await readRawBody(request);
       const bodyText = new TextDecoder().decode(rawBody);
 
- const signature = request.headers.get("X-Signature") || "";
-if (!signature) {
-  return new Response("Missing signature", { status: 400, headers: cors });
-}
+      // -----------------------------
+      // SIGNATURE HANDLING (FIXED)
+      // -----------------------------
+      const signature = request.headers.get("X-Signature") || "";
+      if (!signature) {
+        return new Response("Missing signature", { status: 400, headers: cors });
+      }
 
-let signatureBytes;
-try {
-  signatureBytes = hexToUint8(signature);
-} catch (e) {
-  return new Response("Bad signature format", { status: 400, headers: cors });
-}
-
-const secret = env.LEMON_SECRET;
-
-
-      // Convert hex signature → bytes
       function hexToUint8(hex) {
         const bytes = new Uint8Array(hex.length / 2);
         for (let i = 0; i < bytes.length; i++) {
@@ -65,7 +56,14 @@ const secret = env.LEMON_SECRET;
         return bytes;
       }
 
-      const signatureBytes = hexToUint8(signature);
+      let signatureBytes;
+      try {
+        signatureBytes = hexToUint8(signature);
+      } catch (e) {
+        return new Response("Bad signature format", { status: 400, headers: cors });
+      }
+
+      const secret = env.LEMON_SECRET;
 
       // Import secret key
       const cryptoKey = await crypto.subtle.importKey(
