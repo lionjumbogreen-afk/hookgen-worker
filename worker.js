@@ -3,6 +3,23 @@ export default {
     const url = new URL(request.url);
 
     // ============================================================
+    // HOOKGEN GENERATION ROUTES (story, hook-only, cta)
+    // These requests get forwarded to your AI worker.
+    // ============================================================
+    if (
+      url.pathname === "/generate" ||
+      url.pathname === "/hook" ||
+      url.pathname === "/cta"
+    ) {
+      // Forward to your AI worker
+      return fetch("https://your-ai-worker-url" + url.pathname, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body
+      });
+    }
+
+    // ============================================================
     // RAW BODY READER
     // ============================================================
     async function readRawBody(req) {
@@ -40,9 +57,6 @@ export default {
       const rawBody = await readRawBody(request);
       const bodyText = new TextDecoder().decode(rawBody);
 
-      // -----------------------------
-      // SIGNATURE HANDLING (FIXED)
-      // -----------------------------
       const signature = request.headers.get("X-Signature") || "";
       if (!signature) {
         return new Response("Missing signature", { status: 400, headers: cors });
@@ -65,7 +79,6 @@ export default {
 
       const secret = env.LEMON_SECRET;
 
-      // Import secret key
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(secret),
@@ -74,7 +87,6 @@ export default {
         ["verify"]
       );
 
-      // Verify signature
       const isValid = await crypto.subtle.verify(
         "HMAC",
         cryptoKey,
@@ -86,7 +98,6 @@ export default {
         return new Response("Invalid signature", { status: 401, headers: cors });
       }
 
-      // Parse JSON
       let data;
       try {
         data = JSON.parse(bodyText);
@@ -96,13 +107,14 @@ export default {
 
       const event = data?.meta?.event_name || "";
 
-      // Only process license events
       if (event !== "license_key_created" && event !== "license_key_updated") {
         return new Response("Ignored", { status: 200, headers: cors });
       }
 
       const licenseKey = data?.data?.attributes?.key || "";
-const status = event === "license_key_created" ? "active" : data?.data?.attributes?.status;
+      const status = event === "license_key_created"
+        ? "active"
+        : data?.data?.attributes?.status;
 
       if (licenseKey) {
         const record = {
@@ -158,7 +170,6 @@ const status = event === "license_key_created" ? "active" : data?.data?.attribut
 
       const activations = record.activations || [];
 
-      // Already activated on this device
       if (activations.some(a => a.deviceId === deviceId)) {
         return new Response(JSON.stringify({
           ok: true,
@@ -168,7 +179,6 @@ const status = event === "license_key_created" ? "active" : data?.data?.attribut
         }), { headers: cors });
       }
 
-      // Enforce 3 device limit
       if (activations.length >= 3) {
         return new Response(JSON.stringify({
           ok: false,
@@ -177,7 +187,6 @@ const status = event === "license_key_created" ? "active" : data?.data?.attribut
         }), { headers: cors });
       }
 
-      // Add new activation
       activations.push({
         deviceId,
         timestamp: Date.now()
@@ -195,6 +204,9 @@ const status = event === "license_key_created" ? "active" : data?.data?.attribut
       }), { headers: cors });
     }
 
-    return new Response("Worker online");
+    // ============================================================
+    // DEFAULT FALLBACK
+    // ============================================================
+    return fetch(request);
   }
 };
