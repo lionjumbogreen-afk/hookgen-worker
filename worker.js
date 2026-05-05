@@ -4,15 +4,18 @@ export default {
 
     // ============================================================
     // HOOKGEN GENERATION ROUTES (story, hook-only, cta)
-    // These requests get forwarded to your AI worker.
+    // Forward these to your main site (where your AI logic lives)
     // ============================================================
     if (
       url.pathname === "/generate" ||
       url.pathname === "/hook" ||
       url.pathname === "/cta"
     ) {
-      // Forward to your AI worker
-      return fetch("https://your-ai-worker-url" + url.pathname, {
+      const targetUrl = new URL(request.url);
+      targetUrl.hostname = "hookgen.org";
+      targetUrl.protocol = "https:";
+
+      return fetch(targetUrl.toString(), {
         method: request.method,
         headers: request.headers,
         body: request.body
@@ -205,7 +208,7 @@ export default {
     }
 
     // ============================================================
-    // DEFAULT FALLBACK
+    // DEFAULT FALLBACK – let your normal site handle everything else
     // ============================================================
     return fetch(request);
   }
