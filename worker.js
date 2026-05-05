@@ -102,7 +102,7 @@ export default {
       }
 
       const licenseKey = data?.data?.attributes?.key || "";
-      const status = data?.data?.attributes?.status || "inactive";
+const status = event === "license_key_created" ? "active" : data?.data?.attributes?.status;
 
       if (licenseKey) {
         const record = {
