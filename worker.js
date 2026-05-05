@@ -41,8 +41,20 @@ export default {
       const rawBody = await readRawBody(request);
       const bodyText = new TextDecoder().decode(rawBody);
 
-      const signature = request.headers.get("X-Signature") || "";
-      const secret = env.LEMON_SECRET;
+ const signature = request.headers.get("X-Signature") || "";
+if (!signature) {
+  return new Response("Missing signature", { status: 400, headers: cors });
+}
+
+let signatureBytes;
+try {
+  signatureBytes = hexToUint8(signature);
+} catch (e) {
+  return new Response("Bad signature format", { status: 400, headers: cors });
+}
+
+const secret = env.LEMON_SECRET;
+
 
       // Convert hex signature → bytes
       function hexToUint8(hex) {
