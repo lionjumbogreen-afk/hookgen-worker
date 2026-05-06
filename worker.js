@@ -3,19 +3,18 @@ export default {
     const url = new URL(request.url);
 
     // ============================================================
-    // HOOKGEN GENERATION ROUTES (story, hook-only, cta)
-    // Forward these to your main site (where your AI logic lives)
+    // FORWARD GENERATION ROUTES TO MAIN SITE
     // ============================================================
     if (
       url.pathname === "/generate" ||
       url.pathname === "/hook" ||
       url.pathname === "/cta"
     ) {
-      const targetUrl = new URL(request.url);
-      targetUrl.hostname = "hookgen.org";
-      targetUrl.protocol = "https:";
+      const target = new URL(request.url);
+      target.hostname = "hookgen.org";
+      target.protocol = "https:";
 
-      return fetch(targetUrl.toString(), {
+      return fetch(target.toString(), {
         method: request.method,
         headers: request.headers,
         body: request.body
@@ -23,28 +22,32 @@ export default {
     }
 
     // ============================================================
-    // RAW BODY READER
+    // RAW BODY READER (for webhook signature)
     // ============================================================
     async function readRawBody(req) {
       const reader = req.body.getReader();
       const chunks = [];
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
       }
-      let length = chunks.reduce((a, c) => a + c.length, 0);
-      let merged = new Uint8Array(length);
+
+      const length = chunks.reduce((a, c) => a + c.length, 0);
+      const merged = new Uint8Array(length);
+
       let offset = 0;
       for (let chunk of chunks) {
         merged.set(chunk, offset);
         offset += chunk.length;
       }
+
       return merged;
     }
 
     // ============================================================
-    // WEBHOOK HANDLER
+    // LEMON SQUEEZY WEBHOOK
     // ============================================================
     if (url.pathname === "/webhook") {
       const cors = {
@@ -65,6 +68,7 @@ export default {
         return new Response("Missing signature", { status: 400, headers: cors });
       }
 
+      // Convert hex → bytes
       function hexToUint8(hex) {
         const bytes = new Uint8Array(hex.length / 2);
         for (let i = 0; i < bytes.length; i++) {
@@ -76,15 +80,14 @@ export default {
       let signatureBytes;
       try {
         signatureBytes = hexToUint8(signature);
-      } catch (e) {
+      } catch {
         return new Response("Bad signature format", { status: 400, headers: cors });
       }
 
-      const secret = env.LEMON_SECRET;
-
+      // Verify HMAC SHA‑256
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
-        new TextEncoder().encode(secret),
+        new TextEncoder().encode(env.LEMON_SECRET),
         { name: "HMAC", hash: "SHA-256" },
         false,
         ["verify"]
@@ -101,6 +104,7 @@ export default {
         return new Response("Invalid signature", { status: 401, headers: cors });
       }
 
+      // Parse JSON
       let data;
       try {
         data = JSON.parse(bodyText);
@@ -115,9 +119,10 @@ export default {
       }
 
       const licenseKey = data?.data?.attributes?.key || "";
-      const status = event === "license_key_created"
-        ? "active"
-        : data?.data?.attributes?.status;
+      const status =
+        event === "license_key_created"
+          ? "active"
+          : data?.data?.attributes?.status;
 
       if (licenseKey) {
         const record = {
@@ -131,7 +136,7 @@ export default {
     }
 
     // ============================================================
-    // ACTIVATION ENDPOINT (3 DEVICES)
+    // LICENSE ACTIVATION (3 DEVICES)
     // ============================================================
     if (url.pathname === "/activate") {
       const cors = {
@@ -148,48 +153,57 @@ export default {
       const { licenseKey, deviceId } = body;
 
       if (!licenseKey || !deviceId) {
-        return new Response(JSON.stringify({
-          ok: false,
-          error: "missing_fields"
-        }), { headers: cors });
+        return new Response(
+          JSON.stringify({ ok: false, error: "missing_fields" }),
+          { headers: cors }
+        );
       }
 
       const raw = await env.LICENSES.get(licenseKey);
       if (!raw) {
-        return new Response(JSON.stringify({
-          ok: false,
-          error: "license_not_found"
-        }), { headers: cors });
+        return new Response(
+          JSON.stringify({ ok: false, error: "license_not_found" }),
+          { headers: cors }
+        );
       }
 
       const record = JSON.parse(raw);
 
       if (record.status !== "active") {
-        return new Response(JSON.stringify({
-          ok: false,
-          error: "inactive_license"
-        }), { headers: cors });
+        return new Response(
+          JSON.stringify({ ok: false, error: "inactive_license" }),
+          { headers: cors }
+        );
       }
 
       const activations = record.activations || [];
 
+      // Already activated on this device
       if (activations.some(a => a.deviceId === deviceId)) {
-        return new Response(JSON.stringify({
-          ok: true,
-          isPro: true,
-          devicesUsed: activations.length,
-          devicesAllowed: 3
-        }), { headers: cors });
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            isPro: true,
+            devicesUsed: activations.length,
+            devicesAllowed: 3
+          }),
+          { headers: cors }
+        );
       }
 
+      // Limit reached
       if (activations.length >= 3) {
-        return new Response(JSON.stringify({
-          ok: false,
-          error: "activation_limit",
-          message: "This license is already activated on 3 devices."
-        }), { headers: cors });
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            error: "activation_limit",
+            message: "This license is already activated on 3 devices."
+          }),
+          { headers: cors }
+        );
       }
 
+      // Add activation
       activations.push({
         deviceId,
         timestamp: Date.now()
@@ -199,16 +213,19 @@ export default {
 
       await env.LICENSES.put(licenseKey, JSON.stringify(record));
 
-      return new Response(JSON.stringify({
-        ok: true,
-        isPro: true,
-        devicesUsed: activations.length,
-        devicesAllowed: 3
-      }), { headers: cors });
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          isPro: true,
+          devicesUsed: activations.length,
+          devicesAllowed: 3
+        }),
+        { headers: cors }
+      );
     }
 
     // ============================================================
-    // DEFAULT FALLBACK – let your normal site handle everything else
+    // DEFAULT FALLBACK
     // ============================================================
     return fetch(request);
   }
