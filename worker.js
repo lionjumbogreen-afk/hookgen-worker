@@ -3,19 +3,13 @@ export default {
     const url = new URL(request.url);
 
     // ============================================================
-    // FORWARD GENERATION ROUTES TO MAIN SITE
+    // GENERATION ENDPOINT — FORWARD TO HOOKGEN.ORG BACKEND
     // ============================================================
-    if (
-      url.pathname === "/generate" ||
-      url.pathname === "/hook" ||
-      url.pathname === "/cta"
-    ) {
-      const target = new URL(request.url);
-      target.hostname = "hookgen.org";
-      target.protocol = "https:";
+    if (url.pathname === "/generate") {
+      const target = "https://hookgen.org/generate";
 
-      return fetch(target.toString(), {
-        method: request.method,
+      return fetch(target, {
+        method: "POST",
         headers: request.headers,
         body: request.body
       });
@@ -68,7 +62,6 @@ export default {
         return new Response("Missing signature", { status: 400, headers: cors });
       }
 
-      // Convert hex → bytes
       function hexToUint8(hex) {
         const bytes = new Uint8Array(hex.length / 2);
         for (let i = 0; i < bytes.length; i++) {
@@ -84,7 +77,6 @@ export default {
         return new Response("Bad signature format", { status: 400, headers: cors });
       }
 
-      // Verify HMAC SHA‑256
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(env.LEMON_SECRET),
@@ -104,7 +96,6 @@ export default {
         return new Response("Invalid signature", { status: 401, headers: cors });
       }
 
-      // Parse JSON
       let data;
       try {
         data = JSON.parse(bodyText);
@@ -113,7 +104,6 @@ export default {
       }
 
       const event = data?.meta?.event_name || "";
-
       if (event !== "license_key_created" && event !== "license_key_updated") {
         return new Response("Ignored", { status: 200, headers: cors });
       }
@@ -178,7 +168,6 @@ export default {
 
       const activations = record.activations || [];
 
-      // Already activated on this device
       if (activations.some(a => a.deviceId === deviceId)) {
         return new Response(
           JSON.stringify({
@@ -191,7 +180,6 @@ export default {
         );
       }
 
-      // Limit reached
       if (activations.length >= 3) {
         return new Response(
           JSON.stringify({
@@ -203,7 +191,6 @@ export default {
         );
       }
 
-      // Add activation
       activations.push({
         deviceId,
         timestamp: Date.now()
@@ -227,6 +214,7 @@ export default {
     // ============================================================
     // DEFAULT FALLBACK
     // ============================================================
-    return fetch(request);
+    return new Response("Not found", { status: 404 });
   }
 };
+
