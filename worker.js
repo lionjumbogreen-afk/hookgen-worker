@@ -20,7 +20,6 @@ export default {
         const body = await request.json();
 
         const topic = body.topic || "";
-        const tone = body.tone || "tiktok_narrator";
         const mode = body.mode || "story";
         const format = body.format || "short";
         const proGen = body.proGen || false;
@@ -41,14 +40,14 @@ export default {
           }
         }
 
-        // If user tries to use Pro Gen without Pro → BLOCK
+        // If user tries to use Pro Gen without Pro → return clean JSON
         if (proGen && !isPro) {
           return new Response(
             JSON.stringify({
               error: "not_pro",
               message: "HookGen+ required for Pro Gen features."
             }),
-            { status: 403, headers: corsHeaders }
+            { status: 200, headers: corsHeaders }
           );
         }
 
