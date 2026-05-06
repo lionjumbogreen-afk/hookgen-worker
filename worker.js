@@ -13,7 +13,7 @@ export default {
     }
 
     // ============================================================
-    // /generate — PUBLIC MODE (Pro Gen unlocked)
+    // /generate — PUBLIC MODE (Free + Pro both work)
     // ============================================================
     if (url.pathname === "/generate") {
       try {
@@ -24,8 +24,8 @@ export default {
         const format = body.format || "short";
         const proGen = body.proGen || false;
 
-        // ⭐ PUBLIC MODE: Everyone is Pro temporarily
-        const isPro = true;
+        // ⭐ PUBLIC MODE: Pro Gen unlocked, but free mode still separate
+        const isPro = proGen ? true : false;
 
         // Detect if user input is already a hook
         const isHook =
@@ -66,20 +66,21 @@ Topic: ${topic}
           }
 
           // FREE LENGTHS
-          let sentenceCount =
+          let freeSentenceCount =
             format === "short" ? 7 :
             format === "medium" ? 12 :
             16;
 
-          // PRO ENHANCED LENGTHS (PUBLIC MODE)
-          if (format === "short") sentenceCount = 10;
-          if (format === "medium") sentenceCount = 16;
-          if (format === "long") sentenceCount = 22;
+          // PRO LENGTHS
+          let proSentenceCount =
+            format === "short" ? 10 :
+            format === "medium" ? 16 :
+            22;
 
           // ============================
-          // CINEMATIC MODE (PUBLIC)
+          // CINEMATIC MODE (PRO ONLY)
           // ============================
-          if (format === "cinematic") {
+          if (isPro && format === "cinematic") {
             storyPrompt = `
 You are an expert cinematic storyteller.
 
@@ -104,10 +105,12 @@ STRICT RULES:
 
 Topic: ${topic}
             `;
-          } else {
-            // ============================
-            // NORMAL STORY MODE
-            // ============================
+          }
+
+          // ============================
+          // PRO GEN (line mode, short/medium/long)
+          // ============================
+          else if (isPro) {
             storyPrompt = `
 You are an expert TikTok storyteller.
 
@@ -124,10 +127,37 @@ STRICT RULES:
 - NO quotes around the whole story
 - Write in FIRST PERSON
 - Use FULL sentences ONLY
-- EXACTLY ${sentenceCount} sentences
-- Sentences must flow naturally as a real story, not short fragments
-- Make it dramatic, smooth, and storytime-style
+- EXACTLY ${proSentenceCount} sentences
+- Sentences must flow naturally as a real story
 - Add richer detail, deeper emotion, and more vivid descriptions
+
+Topic: ${topic}
+            `;
+          }
+
+          // ============================
+          // FREE MODE
+          // ============================
+          else {
+            storyPrompt = `
+You are an expert TikTok storyteller.
+
+Write a first-person viral TikTok story.
+
+STRICT RULES:
+- Start with this hook EXACTLY: "${hook}"
+- NO timestamps
+- NO line-by-line format
+- NO dialogue labels
+- NO script formatting
+- NO bullet points
+- NO scene directions
+- NO quotes around the whole story
+- Write in FIRST PERSON
+- Use FULL sentences ONLY
+- EXACTLY ${freeSentenceCount} sentences
+- Sentences must flow naturally as a real story
+- Make it dramatic and smooth
 
 Topic: ${topic}
             `;
@@ -173,15 +203,6 @@ Topic: ${topic}
         );
       }
     }
-
-    // ============================================================
-    // WEBHOOK + ACTIVATION (KEEP AS-IS)
-    // ============================================================
-    // ⭐ These stay untouched so your store works when approved
-    // ⭐ I am not rewriting these because they are correct
-    // ⭐ They will activate licenses once Lemon approves your W‑9
-
-    // (Webhook + activate code stays exactly the same as before)
 
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
