@@ -32,16 +32,27 @@ export default {
         let storyPrompt = "";
 
         // ============================
-        // HOOK MODE
+        // HOOK MODE (FIXED)
         // ============================
         if (mode === "hook") {
           storyPrompt = `
-Turn the topic below into a viral TikTok hook.
+You are generating a dramatic TikTok-style hook.
 
-Rules:
+RULES:
 - 1–2 sentences only
-- No story
+- No hashtags
+- No jokes unless topic is comedic
 - No timestamps
+- No "Your Hook:" prefix
+- Must feel emotional, mysterious, or urgent
+- Must sound like a viral TikTok story opener
+
+FORMAT EXAMPLES:
+“My mom can’t stop shaking… and the doctors won’t tell us why.”
+“My mom’s hands wouldn’t stop shaking — and last night, I found out the reason.”
+“My mom started shaking uncontrollably… and then things got worse.”
+
+Now write a hook in this style based on the topic below.
 
 Topic: ${topic}
           `;
