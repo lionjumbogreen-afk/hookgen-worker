@@ -13,7 +13,7 @@ export default {
     }
 
     // ============================================================
-    // /generate — HOOK, STORY, CTA
+    // /generate — HOOK, STORY, CTA, PRO GEN, CINEMATIC
     // ============================================================
     if (url.pathname === "/generate") {
       try {
@@ -23,6 +23,34 @@ export default {
         const tone = body.tone || "tiktok_narrator";
         const mode = body.mode || "story";
         const format = body.format || "short";
+        const proGen = body.proGen || false;
+        const licenseKey = body.licenseKey || null;
+
+        // ============================================================
+        // CHECK PRO LICENSE
+        // ============================================================
+        let isPro = false;
+
+        if (licenseKey) {
+          const raw = await env.LICENSES.get(licenseKey);
+          if (raw) {
+            const record = JSON.parse(raw);
+            if (record.status === "active") {
+              isPro = true;
+            }
+          }
+        }
+
+        // If user tries to use Pro Gen without Pro → BLOCK
+        if (proGen && !isPro) {
+          return new Response(
+            JSON.stringify({
+              error: "not_pro",
+              message: "HookGen+ required for Pro Gen features."
+            }),
+            { status: 403, headers: corsHeaders }
+          );
+        }
 
         // Detect if user input is already a hook
         const isHook =
@@ -53,7 +81,7 @@ Topic: ${topic}
         }
 
         // ============================
-        // STORY MODE
+        // STORY MODE (FREE + PRO)
         // ============================
         if (mode === "story") {
           if (isHook) {
@@ -62,19 +90,57 @@ Topic: ${topic}
             hook = `Generate a viral TikTok hook for this topic: ${topic}`;
           }
 
-          const sentenceCount =
+          // FREE LENGTHS
+          let sentenceCount =
             format === "short" ? 7 :
             format === "medium" ? 12 :
             16;
 
-          storyPrompt = `
+          // PRO ENHANCED LENGTHS
+          if (isPro && format === "short") sentenceCount = 10;
+          if (isPro && format === "medium") sentenceCount = 16;
+          if (isPro && format === "long") sentenceCount = 22;
+
+          // ============================
+          // CINEMATIC MODE (PRO ONLY)
+          // ============================
+          if (isPro && format === "cinematic") {
+            storyPrompt = `
+You are an expert cinematic storyteller.
+
+Write a long, emotional, dramatic TikTok cinematic story.
+
+STRICT RULES:
+- Start with this hook EXACTLY: "${hook}"
+- NO timestamps
+- NO line-by-line format
+- NO dialogue labels
+- NO script formatting
+- NO bullet points
+- NO scene directions
+- NO quotes around the whole story
+- Write in FIRST PERSON
+- Use FULL sentences ONLY
+- EXACTLY 4 paragraphs
+- EXACTLY 5 sentences per paragraph
+- Smooth, emotional, cinematic pacing
+- Rich detail, sensory language, deeper emotions
+- Story must feel like a movie scene unfolding
+
+Topic: ${topic}
+            `;
+          } else {
+            // ============================
+            // NORMAL STORY MODE (FREE + PRO)
+            // ============================
+            storyPrompt = `
 You are an expert TikTok storyteller.
 
 Write a first-person viral TikTok story.
 
 STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
-- NO timestamps (no 0s, 3s, etc.)
+- NO timestamps
 - NO line-by-line format
 - NO dialogue labels (no "Me:", no "He said:")
 - NO script formatting
@@ -86,9 +152,11 @@ STRICT RULES:
 - EXACTLY ${sentenceCount} sentences
 - Sentences must flow naturally as a real story, not short fragments
 - Make it dramatic, smooth, and storytime-style
+${isPro ? "- Add richer detail, deeper emotion, and more vivid descriptions" : ""}
 
 Topic: ${topic}
-          `;
+            `;
+          }
         }
 
         // ============================
@@ -119,7 +187,7 @@ Topic: ${topic}
         });
 
         return new Response(
-          JSON.stringify({ story: result.response }),
+          JSON.stringify({ story: result.response, isPro }),
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
 
@@ -310,3 +378,4 @@ Topic: ${topic}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
+
