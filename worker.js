@@ -22,7 +22,6 @@ export default {
       const rawBody = await request.text();
       const signature = request.headers.get("X-Signature");
 
-      // Verify signature
       const encoder = new TextEncoder();
       const key = await crypto.subtle.importKey(
         "raw",
@@ -46,11 +45,9 @@ export default {
         return new Response("Invalid signature", { status: 401 });
       }
 
-      // Parse JSON
       const data = JSON.parse(rawBody);
       const event = data.meta.event_name;
 
-      // Handle license creation
       if (event === "license_key_created") {
         const license = data.data.attributes.key;
 
@@ -66,195 +63,124 @@ export default {
       return new Response("OK", { status: 200 });
     }
 
-    // ===============================
-// LICENSE VALIDATION (FIXED)
-// ===============================
-if (url.pathname === "/validate" && request.method === "POST") {
-  const body = await request.json();
-  const key = body.license;
+    // ============================
+    // LICENSE VALIDATION
+    // ============================
+    if (url.pathname === "/validate" && request.method === "POST") {
+      const body = await request.json();
+      const key = body.license;
 
-  const stored = await env.Licenses.get(key, { type: "json" });
+      const stored = await env.Licenses.get(key, { type: "json" });
 
-  // If no license or not active → invalid
-  if (!stored || stored.status !== "active") {
-    return new Response(JSON.stringify({ valid: false }), {
-      headers: corsHeaders
-    });
-  }
+      if (!stored || stored.status !== "active") {
+        return new Response(JSON.stringify({ valid: false }), {
+          headers: corsHeaders
+        });
+      }
 
-  // No crash even if activations doesn't exist
-  return new Response(JSON.stringify({ valid: true }), {
-    headers: corsHeaders
-  });
-}
-
+      return new Response(JSON.stringify({ valid: true }), {
+        headers: corsHeaders
+      });
+    }
 
     // ============================
-    // YOUR /generate ENDPOINT
-    // (unchanged — fully preserved)
+    // GENERATE ENDPOINT (FULLY REBUILT)
     // ============================
-    if (url.pathname === "/generate") {
+    if (url.pathname === "/generate" && request.method === "POST") {
       try {
         const body = await request.json();
 
+        // FRONTEND FIELDS
         const topic = body.topic || "";
-        const mode = body.mode || "story";
+        const tone = body.tone || "tiktok_narrator";
+        const mode = body.mode || "direct";
         const format = body.format || "short";
-        const proGen = body.proGen || false;
+        const proGen = body.proGen === true;
 
-        const isPro = proGen ? true : false;
+        // LICENSE CHECK
+        const auth = request.headers.get("Authorization");
+        const licenseKey = auth?.replace("Bearer ", "").trim();
+        let isPro = false;
 
+        if (licenseKey) {
+          const stored = await env.Licenses.get(licenseKey, { type: "json" });
+          if (stored && stored.status === "active") {
+            isPro = true;
+          }
+        }
+
+        // HOOK DETECTION
         const isHook =
           topic.trim().endsWith("...") ||
           topic.split(" ").length <= 12;
 
-        let hook = "";
-        let storyPrompt = "";
+        const hook = isHook
+          ? topic
+          : `Generate a viral TikTok hook for this topic: ${topic}`;
 
-        if (mode === "hook") {
-          storyPrompt = `
-You are generating a dramatic TikTok-style hook.
+        // FORMAT LENGTHS
+        const normalizedFormat = format === "line" ? "short" : format;
+
+        const freeSentences =
+          normalizedFormat === "short" ? 7 :
+          normalizedFormat === "medium" ? 12 :
+          normalizedFormat === "long" ? 16 :
+          7;
+
+        const proSentences =
+          normalizedFormat === "short" ? 10 :
+          normalizedFormat === "medium" ? 16 :
+          normalizedFormat === "long" ? 22 :
+          normalizedFormat === "cinematic" ? 28 :
+          12;
+
+        const sentenceCount = isPro ? proSentences : freeSentences;
+
+        // PROMPT BUILDER
+        let storyPrompt = `
+You are an expert TikTok storyteller.
+
+TONE: ${tone}
+MODE: ${mode}
+FORMAT: ${normalizedFormat}
+PRO USER: ${isPro}
+
+Write a ${sentenceCount}-sentence TikTok story.
+Start with this hook EXACTLY:
+"${hook}"
+
+Topic: ${topic}
 
 RULES:
-- 1–2 sentences only
+- First-person POV
 - No hashtags
-- No jokes unless topic is comedic
+- No emojis
 - No timestamps
-- No "Your Hook:" prefix
-- Must feel emotional, mysterious, or urgent
-- Must sound like a viral TikTok story opener
+- No disclaimers
+- Must feel like a viral TikTok story
+- Keep pacing tight and emotional
+`;
 
-Topic: ${topic}
-          `;
-        }
-
-        if (mode === "story") {
-          hook = isHook ? topic : `Generate a viral TikTok hook for this topic: ${topic}`;
-
-          const normalizedFormat =
-            format === "line" ? "short" : format;
-
-          let freeSentenceCount =
-            normalizedFormat === "short" ? 7 :
-            normalizedFormat === "medium" ? 12 :
-            normalizedFormat === "long" ? 16 :
-            7;
-
-          let proSentenceCount =
-            normalizedFormat === "short" ? 10 :
-            normalizedFormat === "medium" ? 16 :
-            normalizedFormat === "long" ? 22 :
-            12;
-
-          if (mode === "suspense") {
-            storyPrompt = `
-Write a suspenseful TikTok-style story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "emotional") {
-            storyPrompt = `
-Write an emotional TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "confession") {
-            storyPrompt = `
-Write a TikTok confession story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "pov") {
-            storyPrompt = `
-Write a TikTok POV story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "plottwist") {
-            storyPrompt = `
-Write a TikTok story with a shocking plot twist.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "mystery") {
-            storyPrompt = `
-Write a mysterious TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "comedy") {
-            storyPrompt = `
-Write a funny TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (mode === "glowup") {
-            storyPrompt = `
-Write a glow-up TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (isPro && normalizedFormat === "cinematic") {
-            storyPrompt = `
-Write a cinematic TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else if (isPro) {
-            storyPrompt = `
-Write a first-person TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-
-          else {
-            storyPrompt = `
-Write a first-person TikTok story.
-Start with this hook EXACTLY: "${hook}"
-Topic: ${topic}
-            `;
-          }
-        }
-
-        if (mode === "cta") {
-          storyPrompt = `
-Write a short TikTok CTA.
-Topic: ${topic}
-          `;
-        }
-
+        // AI CALL
         const ai = env.AI;
         const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
         });
 
         return new Response(
-          JSON.stringify({ story: result.response, isPro }),
+          JSON.stringify({
+            story: result.response,
+            isPro
+          }),
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
 
       } catch (err) {
         return new Response(
-          JSON.stringify({ error: "generation_failed", details: err.toString() }),
+          JSON.stringify({
+            error: "generation_failed",
+            details: err.toString()
+          }),
           { status: 500, headers: corsHeaders }
         );
       }
