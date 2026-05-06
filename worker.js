@@ -12,9 +12,6 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // ============================================================
-    // /generate — PUBLIC MODE (Free + Pro both work)
-    // ============================================================
     if (url.pathname === "/generate") {
       try {
         const body = await request.json();
@@ -24,10 +21,9 @@ export default {
         const format = body.format || "short";
         const proGen = body.proGen || false;
 
-        // ⭐ PUBLIC MODE: Pro Gen unlocked, but free mode still separate
+        // ⭐ PUBLIC MODE: Pro Gen unlocked
         const isPro = proGen ? true : false;
 
-        // Detect if user input is already a hook
         const isHook =
           topic.trim().endsWith("...") ||
           topic.split(" ").length <= 12;
@@ -49,33 +45,30 @@ Rules:
 - No line breaks between sentences
 - No dialogue labels
 - No script formatting
-- No quotes around the whole hook
 
 Topic: ${topic}
           `;
         }
 
         // ============================
-        // STORY MODE (FREE + PRO)
+        // STORY MODE
         // ============================
         if (mode === "story") {
-          if (isHook) {
-            hook = topic;
-          } else {
-            hook = `Generate a viral TikTok hook for this topic: ${topic}`;
-          }
+          hook = isHook ? topic : `Generate a viral TikTok hook for this topic: ${topic}`;
 
           // FREE LENGTHS
           let freeSentenceCount =
             format === "short" ? 7 :
             format === "medium" ? 12 :
-            16;
+            format === "long" ? 16 :
+            7; // fallback for "line"
 
           // PRO LENGTHS
           let proSentenceCount =
             format === "short" ? 10 :
             format === "medium" ? 16 :
-            22;
+            format === "long" ? 22 :
+            12; // fallback for "line"
 
           // ============================
           // CINEMATIC MODE (PRO ONLY)
@@ -92,23 +85,16 @@ STRICT RULES:
 - NO line-by-line format
 - NO dialogue labels
 - NO script formatting
-- NO bullet points
-- NO scene directions
-- NO quotes around the whole story
 - Write in FIRST PERSON
-- Use FULL sentences ONLY
 - EXACTLY 4 paragraphs
 - EXACTLY 5 sentences per paragraph
-- Smooth, emotional, cinematic pacing
-- Rich detail, sensory language, deeper emotions
-- Story must feel like a movie scene unfolding
 
 Topic: ${topic}
             `;
           }
 
           // ============================
-          // PRO GEN (line mode, short/medium/long)
+          // PRO GEN (line mode + short/medium/long)
           // ============================
           else if (isPro) {
             storyPrompt = `
@@ -121,15 +107,9 @@ STRICT RULES:
 - NO timestamps
 - NO line-by-line format
 - NO dialogue labels
-- NO script formatting
-- NO bullet points
-- NO scene directions
-- NO quotes around the whole story
 - Write in FIRST PERSON
-- Use FULL sentences ONLY
 - EXACTLY ${proSentenceCount} sentences
-- Sentences must flow naturally as a real story
-- Add richer detail, deeper emotion, and more vivid descriptions
+- Add richer detail, deeper emotion, and vivid descriptions
 
 Topic: ${topic}
             `;
@@ -149,14 +129,8 @@ STRICT RULES:
 - NO timestamps
 - NO line-by-line format
 - NO dialogue labels
-- NO script formatting
-- NO bullet points
-- NO scene directions
-- NO quotes around the whole story
 - Write in FIRST PERSON
-- Use FULL sentences ONLY
 - EXACTLY ${freeSentenceCount} sentences
-- Sentences must flow naturally as a real story
 - Make it dramatic and smooth
 
 Topic: ${topic}
@@ -173,22 +147,18 @@ Write a short TikTok CTA based on this topic.
 
 Rules:
 - 1–2 lines
-- No story
 - No timestamps
-- No quotes around the whole CTA
 
 Topic: ${topic}
           `;
         }
 
         // ============================
-        // RUN CLOUDFLARE AI
+        // RUN AI
         // ============================
         const ai = env.AI;
         const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
-          messages: [
-            { role: "user", content: storyPrompt }
-          ]
+          messages: [{ role: "user", content: storyPrompt }]
         });
 
         return new Response(
@@ -207,3 +177,4 @@ Topic: ${topic}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
+
