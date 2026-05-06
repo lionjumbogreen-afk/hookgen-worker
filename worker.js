@@ -84,7 +84,7 @@ export default {
     }
 
     // ============================
-    // GENERATE ENDPOINT (FULLY REBUILT)
+    // GENERATE ENDPOINT (WITH AUTO‑EXTEND)
     // ============================
     if (url.pathname === "/generate" && request.method === "POST") {
       try {
@@ -159,17 +159,44 @@ RULES:
 - No disclaimers
 - Must feel like a viral TikTok story
 - Keep pacing tight and emotional
+- The story MUST end with a complete sentence.
+- Do NOT stop mid-sentence.
+- End with a clear emotional conclusion.
 `;
 
         // AI CALL
         const ai = env.AI;
-        const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+        let result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
         });
 
+        let story = result.response.trim();
+
+        // ============================
+        // AUTO‑EXTEND IF STORY ENDS MID‑SENTENCE
+        // ============================
+        const endsClean =
+          story.endsWith(".") ||
+          story.endsWith("!") ||
+          story.endsWith("?");
+
+        if (!endsClean) {
+          const extendPrompt = `
+The previous story ended mid-sentence. Continue the story and finish the last sentence. Do NOT restart the story. Do NOT change the tone. Finish it naturally.
+Story so far:
+${story}
+`;
+
+          const extendResult = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+            messages: [{ role: "user", content: extendPrompt }]
+          });
+
+          story += " " + extendResult.response.trim();
+        }
+
         return new Response(
           JSON.stringify({
-            story: result.response,
+            story,
             isPro
           }),
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
