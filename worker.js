@@ -83,9 +83,114 @@ Topic: ${topic}
             12;
 
           // ============================
+          // ⭐ NEW MODES ADDED HERE
+          // ============================
+
+          // SUSPENSE
+          if (mode === "suspense") {
+            storyPrompt = `
+Write a suspenseful TikTok-style story that builds tension quickly.
+Use short, punchy sentences. Keep the pacing tight.
+End with a cliffhanger that forces a part 2.
+No hashtags. No emojis.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // EMOTIONAL
+          else if (mode === "emotional") {
+            storyPrompt = `
+Write an emotional, heart-wrenching TikTok story.
+Use deep feelings, vulnerability, and raw honesty.
+Make the viewer feel the heartbreak or confusion.
+No hashtags. No emojis.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // CONFESSION
+          else if (mode === "confession") {
+            storyPrompt = `
+Write a TikTok confession story.
+Start with a strong “I never told anyone this…” tone.
+Reveal something shocking, embarrassing, or dramatic.
+Keep it personal and first-person.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // POV
+          else if (mode === "pov") {
+            storyPrompt = `
+Write a TikTok POV story.
+Start with "POV:" and make it immersive.
+Describe the situation from the viewer’s perspective.
+No hashtags. No emojis.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // PLOT TWIST
+          else if (mode === "plottwist") {
+            storyPrompt = `
+Write a TikTok story with a shocking plot twist at the end.
+Build a normal situation, then flip everything in the final lines.
+No hashtags. No emojis.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // MYSTERY
+          else if (mode === "mystery") {
+            storyPrompt = `
+Write a mysterious TikTok story.
+Focus on strange events, unexplained behavior, or eerie details.
+Keep the viewer guessing. No gore.
+No hashtags. No emojis.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // COMEDY
+          else if (mode === "comedy") {
+            storyPrompt = `
+Write a funny TikTok story with Gen-Z humor.
+Use chaotic energy, unexpected jokes, and relatable moments.
+Keep it light and entertaining.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // GLOW-UP
+          else if (mode === "glowup") {
+            storyPrompt = `
+Write a TikTok glow-up transformation story.
+Focus on personal growth, confidence, and leveling up.
+Make it inspiring and uplifting.
+
+Start with this hook EXACTLY: "${hook}"
+Topic: ${topic}
+            `;
+          }
+
+          // ============================
           // CINEMATIC MODE (PRO ONLY)
           // ============================
-          if (isPro && normalizedFormat === "cinematic") {
+          else if (isPro && normalizedFormat === "cinematic") {
             storyPrompt = `
 You are an expert cinematic storyteller.
 
