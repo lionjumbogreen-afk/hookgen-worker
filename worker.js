@@ -42,9 +42,6 @@ Rules:
 - 1–2 sentences only
 - No story
 - No timestamps
-- No line breaks between sentences
-- No dialogue labels
-- No script formatting
 
 Topic: ${topic}
           `;
@@ -56,24 +53,28 @@ Topic: ${topic}
         if (mode === "story") {
           hook = isHook ? topic : `Generate a viral TikTok hook for this topic: ${topic}`;
 
+          // ⭐ FIX: handle "line" format
+          const normalizedFormat =
+            format === "line" ? "short" : format;
+
           // FREE LENGTHS
           let freeSentenceCount =
-            format === "short" ? 7 :
-            format === "medium" ? 12 :
-            format === "long" ? 16 :
-            7; // fallback for "line"
+            normalizedFormat === "short" ? 7 :
+            normalizedFormat === "medium" ? 12 :
+            normalizedFormat === "long" ? 16 :
+            7;
 
           // PRO LENGTHS
           let proSentenceCount =
-            format === "short" ? 10 :
-            format === "medium" ? 16 :
-            format === "long" ? 22 :
-            12; // fallback for "line"
+            normalizedFormat === "short" ? 10 :
+            normalizedFormat === "medium" ? 16 :
+            normalizedFormat === "long" ? 22 :
+            12;
 
           // ============================
           // CINEMATIC MODE (PRO ONLY)
           // ============================
-          if (isPro && format === "cinematic") {
+          if (isPro && normalizedFormat === "cinematic") {
             storyPrompt = `
 You are an expert cinematic storyteller.
 
@@ -83,8 +84,6 @@ STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
 - NO timestamps
 - NO line-by-line format
-- NO dialogue labels
-- NO script formatting
 - Write in FIRST PERSON
 - EXACTLY 4 paragraphs
 - EXACTLY 5 sentences per paragraph
@@ -105,8 +104,6 @@ Write a first-person viral TikTok story.
 STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
 - NO timestamps
-- NO line-by-line format
-- NO dialogue labels
 - Write in FIRST PERSON
 - EXACTLY ${proSentenceCount} sentences
 - Add richer detail, deeper emotion, and vivid descriptions
@@ -127,8 +124,6 @@ Write a first-person viral TikTok story.
 STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
 - NO timestamps
-- NO line-by-line format
-- NO dialogue labels
 - Write in FIRST PERSON
 - EXACTLY ${freeSentenceCount} sentences
 - Make it dramatic and smooth
@@ -177,4 +172,3 @@ Topic: ${topic}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
-
