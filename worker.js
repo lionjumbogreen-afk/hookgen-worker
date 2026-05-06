@@ -43,7 +43,9 @@ Rules:
 - 1–2 sentences only
 - No story
 - No timestamps
+- No line breaks between sentences
 - No dialogue labels
+- No script formatting
 - No quotes around the whole hook
 
 Topic: ${topic}
@@ -70,16 +72,20 @@ You are an expert TikTok storyteller.
 
 Write a first-person viral TikTok story.
 
-Rules:
+STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
-- No timestamps
-- No "Me:"
-- No script formatting
-- No quotes around the whole story
+- NO timestamps (no 0s, 3s, etc.)
+- NO line-by-line format
+- NO dialogue labels (no "Me:", no "He said:")
+- NO script formatting
+- NO bullet points
+- NO scene directions
+- NO quotes around the whole story
 - Write in FIRST PERSON
-- Make it dramatic and fast-paced
-- Use FULL sentences
+- Use FULL sentences ONLY
 - EXACTLY ${sentenceCount} sentences
+- Sentences must flow naturally as a real story, not short fragments
+- Make it dramatic, smooth, and storytime-style
 
 Topic: ${topic}
           `;
@@ -304,4 +310,3 @@ Topic: ${topic}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
-
