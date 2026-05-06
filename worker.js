@@ -19,15 +19,15 @@ export default {
     // /generate — AI STORY GENERATION (Cloudflare AI)
     // ============================================================
     if (url.pathname === "/generate") {
-      try {
-        const body = await request.json();
+  try {
+    const body = await request.json();
 
-        const topic = body.topic || "";
-        const tone = body.tone || "tiktok_narrator";
-        const mode = body.mode || "story";
-        const format = body.format || "short";
+    const topic = body.topic || "";
+    const tone = body.tone || "tiktok_narrator";
+    const mode = body.mode || "story";
+    const format = body.format || "short";
 
-        const prompt = `
+    const prompt = `
 You are an expert TikTok storyteller.
 
 Write a viral TikTok story based on the topic below.
@@ -40,25 +40,31 @@ Topic:
 ${topic}
 
 Return ONLY the story text. No intro, no explanation.
-        `.trim();
+    `.trim();
 
-        const ai = env.AI;
-        const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
-          prompt
-        });
+    const ai = env.AI;
 
-        return new Response(
-          JSON.stringify({ story: result.response }),
-          { headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+    const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
 
-      } catch (err) {
-        return new Response(
-          JSON.stringify({ error: "generation_failed", details: err.toString() }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-    }
+    return new Response(
+      JSON.stringify({ story: result.response }),
+      { headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: "generation_failed", details: err.toString() }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
 
     // ============================================================
     // RAW BODY READER (for webhook signature)
