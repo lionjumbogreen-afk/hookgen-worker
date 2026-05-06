@@ -66,25 +66,28 @@ export default {
       return new Response("OK", { status: 200 });
     }
 
-    // ============================
-    // LICENSE VALIDATION
-    // ============================
-    if (url.pathname === "/validate" && request.method === "POST") {
-      const body = await request.json();
-      const key = body.license;
+    // ===============================
+// LICENSE VALIDATION (FIXED)
+// ===============================
+if (url.pathname === "/validate" && request.method === "POST") {
+  const body = await request.json();
+  const key = body.license;
 
-      const stored = await env.Licenses.get(key, { type: "json" });
+  const stored = await env.Licenses.get(key, { type: "json" });
 
-      if (!stored || stored.status !== "active") {
-        return new Response(JSON.stringify({ valid: false }), {
-          headers: corsHeaders
-        });
-      }
+  // If no license or not active → invalid
+  if (!stored || stored.status !== "active") {
+    return new Response(JSON.stringify({ valid: false }), {
+      headers: corsHeaders
+    });
+  }
 
-      return new Response(JSON.stringify({ valid: true }), {
-        headers: corsHeaders
-      });
-    }
+  // No crash even if activations doesn't exist
+  return new Response(JSON.stringify({ valid: true }), {
+    headers: corsHeaders
+  });
+}
+
 
     // ============================
     // YOUR /generate ENDPOINT
