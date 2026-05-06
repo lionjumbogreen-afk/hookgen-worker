@@ -2,9 +2,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // ============================================================
-    // CORS helper
-    // ============================================================
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type, X-Signature",
@@ -16,55 +13,117 @@ export default {
     }
 
     // ============================================================
-    // /generate — AI STORY GENERATION (Cloudflare AI)
+    // /generate — HOOK, STORY, CTA
     // ============================================================
     if (url.pathname === "/generate") {
-  try {
-    const body = await request.json();
+      try {
+        const body = await request.json();
 
-    const topic = body.topic || "";
-    const tone = body.tone || "tiktok_narrator";
-    const mode = body.mode || "story";
-    const format = body.format || "short";
+        const topic = body.topic || "";
+        const tone = body.tone || "tiktok_narrator";
+        const mode = body.mode || "story";
+        const format = body.format || "short";
 
-    const prompt = `
+        // Detect if user input is already a hook
+        const isHook =
+          topic.trim().endsWith("...") ||
+          topic.split(" ").length <= 12;
+
+        let hook = "";
+        let storyPrompt = "";
+
+        // ============================
+        // HOOK MODE
+        // ============================
+        if (mode === "hook") {
+          storyPrompt = `
+Turn the topic below into a viral TikTok hook.
+
+Rules:
+- 1–2 sentences only
+- No story
+- No timestamps
+- No dialogue labels
+- No quotes around the whole hook
+
+Topic: ${topic}
+          `;
+        }
+
+        // ============================
+        // STORY MODE
+        // ============================
+        if (mode === "story") {
+          if (isHook) {
+            hook = topic;
+          } else {
+            hook = `Generate a viral TikTok hook for this topic: ${topic}`;
+          }
+
+          const sentenceCount =
+            format === "short" ? 7 :
+            format === "medium" ? 12 :
+            16;
+
+          storyPrompt = `
 You are an expert TikTok storyteller.
 
-Write a viral TikTok story based on the topic below.
+Write a first-person viral TikTok story.
 
-Tone: ${tone}
-Mode: ${mode}
-Length: ${format}
+Rules:
+- Start with this hook EXACTLY: "${hook}"
+- No timestamps
+- No "Me:"
+- No script formatting
+- No quotes around the whole story
+- Write in FIRST PERSON
+- Make it dramatic and fast-paced
+- Use FULL sentences
+- EXACTLY ${sentenceCount} sentences
 
-Topic:
-${topic}
-
-Return ONLY the story text. No intro, no explanation.
-    `.trim();
-
-    const ai = env.AI;
-
-    const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
-      messages: [
-        {
-          role: "user",
-          content: prompt
+Topic: ${topic}
+          `;
         }
-      ]
-    });
 
-    return new Response(
-      JSON.stringify({ story: result.response }),
-      { headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+        // ============================
+        // CTA MODE
+        // ============================
+        if (mode === "cta") {
+          storyPrompt = `
+Write a short TikTok CTA based on this topic.
 
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "generation_failed", details: err.toString() }),
-      { status: 500, headers: corsHeaders }
-    );
-  }
-}
+Rules:
+- 1–2 lines
+- No story
+- No timestamps
+- No quotes around the whole CTA
+
+Topic: ${topic}
+          `;
+        }
+
+        // ============================
+        // RUN CLOUDFLARE AI
+        // ============================
+        const ai = env.AI;
+        const result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [
+            { role: "user", content: storyPrompt }
+          ]
+        });
+
+        return new Response(
+          JSON.stringify({ story: result.response }),
+          { headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ error: "generation_failed", details: err.toString() }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    }
 
     // ============================================================
     // RAW BODY READER (for webhook signature)
@@ -242,9 +301,7 @@ Return ONLY the story text. No intro, no explanation.
       );
     }
 
-    // ============================================================
-    // DEFAULT
-    // ============================================================
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
+
