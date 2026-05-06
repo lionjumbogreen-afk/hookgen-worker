@@ -4,7 +4,7 @@ export default {
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, X-Signature",
+      "Access-Control-Allow-Headers": "Content-Type, X-Signature, Authorization",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
     };
 
@@ -23,15 +23,17 @@ export default {
         const mode = body.mode || "story";
         const format = body.format || "short";
         const proGen = body.proGen || false;
-        const licenseKey = body.licenseKey || null;
 
         // ============================================================
-        // CHECK PRO LICENSE
+        // READ LICENSE KEY FROM AUTHORIZATION HEADER
         // ============================================================
         let isPro = false;
+        const auth = request.headers.get("Authorization");
 
-        if (licenseKey) {
-          const raw = await env.LICENSES.get(licenseKey);
+        if (auth && auth.startsWith("Bearer ")) {
+          const key = auth.replace("Bearer ", "").trim();
+          const raw = await env.LICENSES.get(key);
+
           if (raw) {
             const record = JSON.parse(raw);
             if (record.status === "active") {
@@ -40,7 +42,7 @@ export default {
           }
         }
 
-        // If user tries to use Pro Gen without Pro → return clean JSON
+        // If user tries Pro Gen without license → return clean JSON
         if (proGen && !isPro) {
           return new Response(
             JSON.stringify({
@@ -141,7 +143,7 @@ STRICT RULES:
 - Start with this hook EXACTLY: "${hook}"
 - NO timestamps
 - NO line-by-line format
-- NO dialogue labels (no "Me:", no "He said:")
+- NO dialogue labels
 - NO script formatting
 - NO bullet points
 - NO scene directions
@@ -377,4 +379,3 @@ Topic: ${topic}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
-
