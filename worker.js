@@ -51,11 +51,13 @@ export default {
       if (event === "license_key_created") {
         const license = data.data.attributes.key;
 
+        // ⭐ ADDED: activations array
         await env.Licenses.put(
           license,
           JSON.stringify({
             status: "active",
-            created_at: Date.now()
+            created_at: Date.now(),
+            activations: []   // ⭐ NEW
           })
         );
       }
@@ -64,11 +66,12 @@ export default {
     }
 
     // ============================
-    // LICENSE VALIDATION
+    // LICENSE VALIDATION (UPDATED)
     // ============================
     if (url.pathname === "/validate" && request.method === "POST") {
       const body = await request.json();
       const key = body.license;
+      const deviceId = body.deviceId; // ⭐ NEW
 
       const stored = await env.Licenses.get(key, { type: "json" });
 
@@ -78,26 +81,50 @@ export default {
         });
       }
 
+      // ⭐ Ensure activations exists
+      if (!Array.isArray(stored.activations)) {
+        stored.activations = [];
+      }
+
+      // ⭐ If already activated on this device → allow
+      if (stored.activations.includes(deviceId)) {
+        return new Response(JSON.stringify({ valid: true }), {
+          headers: corsHeaders
+        });
+      }
+
+      // ⭐ Enforce 3 device limit
+      if (stored.activations.length >= 3) {
+        return new Response(JSON.stringify({
+          valid: false,
+          error: "License already activated on 3 devices."
+        }), {
+          headers: corsHeaders
+        });
+      }
+
+      // ⭐ Add new device activation
+      stored.activations.push(deviceId);
+      await env.Licenses.put(key, JSON.stringify(stored));
+
       return new Response(JSON.stringify({ valid: true }), {
         headers: corsHeaders
       });
     }
 
     // ============================
-    // GENERATE ENDPOINT (WITH AUTO‑EXTEND)
+    // GENERATE ENDPOINT (UNCHANGED)
     // ============================
     if (url.pathname === "/generate" && request.method === "POST") {
       try {
         const body = await request.json();
 
-        // FRONTEND FIELDS
         const topic = body.topic || "";
         const tone = body.tone || "tiktok_narrator";
         const mode = body.mode || "direct";
         const format = body.format || "short";
         const proGen = body.proGen === true;
 
-        // LICENSE CHECK
         const auth = request.headers.get("Authorization");
         const licenseKey = auth?.replace("Bearer ", "").trim();
         let isPro = false;
@@ -109,7 +136,6 @@ export default {
           }
         }
 
-        // HOOK DETECTION
         const isHook =
           topic.trim().endsWith("...") ||
           topic.split(" ").length <= 12;
@@ -118,7 +144,6 @@ export default {
           ? topic
           : `Generate a viral TikTok hook for this topic: ${topic}`;
 
-        // FORMAT LENGTHS
         const normalizedFormat = format === "line" ? "short" : format;
 
         const freeSentences =
@@ -136,7 +161,6 @@ export default {
 
         const sentenceCount = isPro ? proSentences : freeSentences;
 
-        // PROMPT BUILDER
         let storyPrompt = `
 You are an expert TikTok storyteller.
 
@@ -164,7 +188,6 @@ RULES:
 - End with a clear emotional conclusion.
 `;
 
-        // AI CALL
         const ai = env.AI;
         let result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
@@ -172,9 +195,6 @@ RULES:
 
         let story = result.response.trim();
 
-        // ============================
-        // AUTO‑EXTEND IF STORY ENDS MID‑SENTENCE
-        // ============================
         const endsClean =
           story.endsWith(".") ||
           story.endsWith("!") ||
@@ -216,3 +236,4 @@ ${story}
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 };
+
