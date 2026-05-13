@@ -84,7 +84,7 @@ export default {
     }
 
     // ============================
-    // GENERATE ENDPOINT (WITH AUTO‑EXTEND)
+    // GENERATE ENDPOINT
     // ============================
     if (url.pathname === "/generate" && request.method === "POST") {
       try {
@@ -136,7 +136,44 @@ export default {
 
         const sentenceCount = isPro ? proSentences : freeSentences;
 
-        // PROMPT BUILDER
+        const ai = env.AI;
+
+        // ============================
+        // ⭐ NEW: HOOK MODE
+        // ============================
+        if (mode === "hook") {
+          const hookPrompt = `
+You are an expert at writing viral TikTok hooks.
+
+Write ONLY a single hook.
+1–2 sentences max.
+No story.
+No explanation.
+No intro like "Here is your hook".
+No hashtags.
+No emojis.
+
+Topic: ${topic}
+
+Make it punchy, scroll-stopping, and curiosity-driven.
+`;
+
+          const hookResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
+            messages: [{ role: "user", content: hookPrompt }]
+          });
+
+          return new Response(
+            JSON.stringify({
+              hook: hookResult.response.trim(),
+              isPro
+            }),
+            { headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+
+        // ============================
+        // STORY MODE (unchanged)
+        // ============================
         let storyPrompt = `
 You are an expert TikTok storyteller.
 
@@ -164,8 +201,6 @@ RULES:
 - End with a clear emotional conclusion.
 `;
 
-        // AI CALL
-        const ai = env.AI;
         let result = await ai.run("@cf/meta/llama-3-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
         });
@@ -173,7 +208,7 @@ RULES:
         let story = result.response.trim();
 
         // ============================
-        // AUTO‑EXTEND IF STORY ENDS MID‑SENTENCE
+        // AUTO‑EXTEND IF NEEDED
         // ============================
         const endsClean =
           story.endsWith(".") ||
