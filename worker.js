@@ -139,7 +139,7 @@ export default {
         const ai = env.AI;
 
         // ============================
-        // ⭐ NEW: HOOK MODE
+        // ⭐ HOOK MODE
         // ============================
         if (mode === "hook") {
           const hookPrompt = `
@@ -165,6 +165,42 @@ Make it punchy, scroll-stopping, and curiosity-driven.
           return new Response(
             JSON.stringify({
               hook: hookResult.response.trim(),
+              isPro
+            }),
+            { headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+
+        // ============================
+        // ⭐ NEW: CTA MODE
+        // ============================
+        if (mode === "cta") {
+          const ctaPrompt = `
+You are an expert at writing viral TikTok call-to-actions.
+
+Write ONLY a CTA.
+1–2 short lines max.
+No story.
+No explanation.
+No hashtags.
+No emojis.
+
+Make it action-focused and high-conversion.
+Topic: ${topic}
+
+Examples of style (DO NOT copy):
+- Follow so you don’t miss part 2.
+- Comment "story" and I’ll drop the rest.
+- Save this before it disappears.
+`;
+
+          const ctaResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
+            messages: [{ role: "user", content: ctaPrompt }]
+          });
+
+          return new Response(
+            JSON.stringify({
+              cta: ctaResult.response.trim(),
               isPro
             }),
             { headers: { "Content-Type": "application/json", ...corsHeaders } }
