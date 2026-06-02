@@ -273,16 +273,19 @@ ${story}
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
 
-      } catch (err) {
-        return new Response(
-          JSON.stringify({
-            error: "generation_failed",
-            details: err.toString()
-          }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-    }
+     } catch (err) {
+  // ⭐ This prints the REAL error to Wrangler Tail
+  console.error("GENERATION ERROR:", err.stack || err.message || err);
+
+  return new Response(
+    JSON.stringify({
+      error: "generation_failed",
+      details: err.toString()
+    }),
+    { status: 500, headers: corsHeaders }
+  );
+}
+
 
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
