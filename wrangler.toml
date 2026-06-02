@@ -8,14 +8,3 @@ binding = "AI"
 kv_namespaces = [
   { binding = "LICENSES", id = "e7ce89591c214430a55480355cf13a82" }
 ]
-{
-  "observability": {
-    "logs": {
-      "enabled": true,
-      "invocation_logs": true
-    },
-    "traces": {
-      "enabled": false
-    }
-  }
-}
