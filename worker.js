@@ -51,7 +51,7 @@ export default {
       if (event === "license_key_created") {
         const license = data.data.attributes.key;
 
-        await env.Licenses.put(
+        await env.LICENSES.put(
           license,
           JSON.stringify({
             status: "active",
@@ -70,7 +70,7 @@ export default {
       const body = await request.json();
       const key = body.license;
 
-      const stored = await env.Licenses.get(key, { type: "json" });
+      const stored = await env.LICENSES.get(key, { type: "json" });
 
       if (!stored || stored.status !== "active") {
         return new Response(JSON.stringify({ valid: false }), {
@@ -103,7 +103,7 @@ export default {
         let isPro = false;
 
         if (licenseKey) {
-          const stored = await env.Licenses.get(licenseKey, { type: "json" });
+          const stored = await env.LICENSES.get(licenseKey, { type: "json" });
           if (stored && stored.status === "active") {
             isPro = true;
           }
