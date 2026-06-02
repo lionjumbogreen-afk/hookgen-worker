@@ -273,20 +273,20 @@ ${story}
           { headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
 
-     } catch (err) {
-  // ⭐ This prints the REAL error to Wrangler Tail
-  console.error("GENERATION ERROR:", err.stack || err.message || err);
+      } catch (err) {
+        console.error("GENERATION ERROR:", err.stack || err.message || err);
 
-  return new Response(
-    JSON.stringify({
-      error: "generation_failed",
-      details: err.toString()
-    }),
-    { status: 500, headers: corsHeaders }
-  );
-}
-
+        return new Response(
+          JSON.stringify({
+            error: "generation_failed",
+            details: err.toString()
+          }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    } // closes the /generate block
 
     return new Response("Not found", { status: 404, headers: corsHeaders });
-  }
-};
+  } // closes fetch()
+}; // closes export default
+
