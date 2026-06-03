@@ -128,10 +128,10 @@ export default {
           7;
 
         const proSentences =
-          normalizedFormat === "short" ? 9 :
-          normalizedFormat === "medium" ? 14 :
-          normalizedFormat === "long" ? 18 :
-          normalizedFormat === "cinematic" ? 22 :
+          normalizedFormat === "short" ? 10 :
+          normalizedFormat === "medium" ? 16 :
+          normalizedFormat === "long" ? 22 :
+          normalizedFormat === "cinematic" ? 28 :
           12;
 
         const sentenceCount = isPro ? proSentences : freeSentences;
@@ -179,6 +179,13 @@ RULES:
           story.endsWith(".") ||
           story.endsWith("!") ||
           story.endsWith("?");
+
+        if (!endsClean) {
+          const extendPrompt = `
+The previous story ended mid-sentence. Continue the story and finish the last sentence. Do NOT restart the story. Do NOT change the tone. Finish it naturally.
+Story so far:
+${story}
+`;
 
           const extendResult = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
             messages: [{ role: "user", content: extendPrompt }]
