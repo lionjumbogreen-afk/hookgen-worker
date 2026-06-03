@@ -51,7 +51,7 @@ export default {
       if (event === "license_key_created") {
         const license = data.data.attributes.key;
 
-        await env.LICENSES.put(
+        await env.Licenses.put(
           license,
           JSON.stringify({
             status: "active",
@@ -70,7 +70,7 @@ export default {
       const body = await request.json();
       const key = body.license;
 
-      const stored = await env.LICENSES.get(key, { type: "json" });
+      const stored = await env.Licenses.get(key, { type: "json" });
 
       if (!stored || stored.status !== "active") {
         return new Response(JSON.stringify({ valid: false }), {
@@ -84,7 +84,7 @@ export default {
     }
 
     // ============================
-    // GENERATE ENDPOINT
+    // GENERATE ENDPOINT (WITH AUTO‑EXTEND)
     // ============================
     if (url.pathname === "/generate" && request.method === "POST") {
       try {
@@ -103,7 +103,7 @@ export default {
         let isPro = false;
 
         if (licenseKey) {
-          const stored = await env.LICENSES.get(licenseKey, { type: "json" });
+          const stored = await env.Licenses.get(licenseKey, { type: "json" });
           if (stored && stored.status === "active") {
             isPro = true;
           }
@@ -136,80 +136,7 @@ export default {
 
         const sentenceCount = isPro ? proSentences : freeSentences;
 
-        const ai = env.AI;
-
-        // ============================
-        // ⭐ HOOK MODE
-        // ============================
-        if (mode === "hook") {
-          const hookPrompt = `
-You are an expert at writing viral TikTok hooks.
-
-Write ONLY a single hook.
-1–2 sentences max.
-No story.
-No explanation.
-No intro like "Here is your hook".
-No hashtags.
-No emojis.
-
-Topic: ${topic}
-
-Make it punchy, scroll-stopping, and curiosity-driven.
-`;
-
-          const hookResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
-            messages: [{ role: "user", content: hookPrompt }]
-          });
-
-          return new Response(
-            JSON.stringify({
-              hook: hookResult.response.trim(),
-              isPro
-            }),
-            { headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
-
-        // ============================
-        // ⭐ NEW: CTA MODE
-        // ============================
-        if (mode === "cta") {
-          const ctaPrompt = `
-You are an expert at writing viral TikTok call-to-actions.
-
-Write ONLY a CTA.
-1–2 short lines max.
-No story.
-No explanation.
-No hashtags.
-No emojis.
-
-Make it action-focused and high-conversion.
-Topic: ${topic}
-
-Examples of style (DO NOT copy):
-- Follow so you don’t miss part 2.
-- Comment "story" and I’ll drop the rest.
-- Save this before it disappears.
-`;
-
-          const ctaResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
-            messages: [{ role: "user", content: ctaPrompt }]
-          });
-
-          return new Response(
-            JSON.stringify({
-              cta: ctaResult.response.trim(),
-              isPro
-            }),
-            { headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
-
-        // ============================
-        // STORY MODE (unchanged)
-        // ============================
+        // PROMPT BUILDER
         let storyPrompt = `
 You are an expert TikTok storyteller.
 
@@ -237,14 +164,16 @@ RULES:
 - End with a clear emotional conclusion.
 `;
 
-        let result = await ai.run("@cf/meta/llama-3-8b-instruct", {
+        // AI CALL
+        const ai = env.AI;
+        let result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
         });
 
         let story = result.response.trim();
 
         // ============================
-        // AUTO‑EXTEND IF NEEDED
+        // AUTO‑EXTEND IF STORY ENDS MID‑SENTENCE
         // ============================
         const endsClean =
           story.endsWith(".") ||
@@ -258,7 +187,7 @@ Story so far:
 ${story}
 `;
 
-          const extendResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
+          const extendResult = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
             messages: [{ role: "user", content: extendPrompt }]
           });
 
@@ -274,8 +203,6 @@ ${story}
         );
 
       } catch (err) {
-        console.error("GENERATION ERROR:", err.stack || err.message || err);
-
         return new Response(
           JSON.stringify({
             error: "generation_failed",
@@ -284,9 +211,8 @@ ${story}
           { status: 500, headers: corsHeaders }
         );
       }
-    } // closes the /generate block
+    }
 
     return new Response("Not found", { status: 404, headers: corsHeaders });
-  } // closes fetch()
-}; // closes export default
-
+  }
+};
