@@ -166,7 +166,7 @@ RULES:
 
         // AI CALL
         const ai = env.AI;
-        let result = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+        let result = await ai.run("@cf/meta/llama-3-8b-instruct", {
           messages: [{ role: "user", content: storyPrompt }]
         });
 
@@ -187,7 +187,7 @@ Story so far:
 ${story}
 `;
 
-          const extendResult = await ai.run("@cf/meta/llama-3.1-8b-instruct", {
+          const extendResult = await ai.run("@cf/meta/llama-3-8b-instruct", {
             messages: [{ role: "user", content: extendPrompt }]
           });
 
